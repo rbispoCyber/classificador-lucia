@@ -1,4 +1,4 @@
-import React, { useState, useRef, DragEvent } from 'react';
+import React, { useState, useRef, type DragEvent } from 'react';
 import axios from 'axios';
 import Plot from 'react-plotly.js'; // Importando o Plotly para o gráfico único
 
@@ -256,7 +256,7 @@ function App() {
                       margin: { t: 10, r: 20, b: 40, l: 60 },
                       hovermode: 'closest',
                       xaxis: {
-                        title: eixoX,
+                        title: { text: eixoX },
                         type: 'log',
                         range: [-2, Math.log10(0.5)], // O Plotly usa o expoente diretamente
                         gridcolor: '#e5e7eb', zerolinecolor: '#9ca3af',
@@ -265,7 +265,7 @@ function App() {
                         dtick: 1 // Garante que as marcações principais cresçam de 1 em 1 log (ou seja, 10x)
                       },
                       yaxis: {
-                        title: eixoY, type: 'log',
+                        title: { text: eixoY }, type: 'log',
                         range: [-7, 8], // O Plotly usa o expoente diretamente quando type='log'
                         gridcolor: '#e5e7eb', zerolinecolor: '#9ca3af',
                         tickformat: '.1e',
