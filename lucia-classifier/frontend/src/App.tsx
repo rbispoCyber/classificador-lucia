@@ -48,7 +48,7 @@ function App() {
     formData.append('file', selectedFile);
 
     try {
-      const response = await axios.post(`${API_URL}/api/colunas`, formData);
+      const response = await axios.post(`/api/colunas`, formData);
       setColumns(response.data.colunas);
       setStep(2);
     } catch (error) {
@@ -63,7 +63,7 @@ function App() {
     formData.append('file', file); formData.append('col_poro', poroCol); formData.append('col_perm', permCol);
 
     try {
-      const response = await axios.post(`${API_URL}/api/processar`, formData);
+      const response = await axios.post(`/api/processar`, formData);
       const { dados_grafico, arquivo_b64 } = response.data;
       setChartData(dados_grafico); setEixoX(poroCol); setEixoY(permCol);
 
