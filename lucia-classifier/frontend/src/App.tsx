@@ -19,6 +19,7 @@ function App() {
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -51,8 +52,9 @@ function App() {
       const response = await axios.post(`/api/colunas`, formData);
       setColumns(response.data.colunas);
       setStep(2);
-    } catch (error) {
-      alert("Erro ao ler o arquivo Excel.");
+    } catch (error: any) {
+      const mensagem = error.response?.data?.detail || "Ocorreu um erro de conexão com o servidor.";
+      setErrorMsg(mensagem);
     }
   };
 
@@ -73,8 +75,9 @@ function App() {
       const blob = new Blob([new Uint8Array(byteNumbers)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       setDownloadUrl(window.URL.createObjectURL(blob));
       setStep(3);
-    } catch (error) {
-      alert("Ocorreu um erro.");
+    } catch (error: any) {
+      const mensagem = error.response?.data?.detail || "Ocorreu um erro de conexão com o servidor.";
+      setErrorMsg(mensagem);
     } finally {
       setIsProcessing(false);
     }
@@ -83,6 +86,7 @@ function App() {
   const handleReset = () => {
     setFile(null); setColumns([]); setPoroCol('nenhum'); setPermCol('nenhum');
     setEixoX('nenhum'); setEixoY('nenhum'); setChartData([]); setDownloadUrl(null); setStep(1);
+    setErrorMsg(null);
   };
 
   // --- LÓGICA DO PLOTLY (Gráfico 1 - Interativo com Zoom e Curvas) ---
@@ -128,6 +132,25 @@ function App() {
     <div className="min-h-screen bg-gray-50 flex flex-col items-center py-10 px-4">
       <div className={`w-full bg-white rounded-xl shadow-xl border border-gray-100 p-8 ${step === 3 ? 'max-w-5xl' : (step === 1 ? 'max-w-3xl' : 'max-w-md')} transition-all duration-300`}>
         <h1 className="text-2xl font-bold text-gray-800 text-center mb-6">Classificação de Lucia</h1>
+
+        {/* ALERTA DE ERRO */}
+        {errorMsg && (
+          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-md flex items-start">
+            <div className="flex-shrink-0">
+              <span className="text-red-500 text-xl">⚠️</span>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Atenção aos Dados</h3>
+              <p className="text-sm text-red-700 mt-1">{errorMsg}</p>
+              <button 
+                onClick={() => setErrorMsg(null)}
+                className="mt-2 text-xs font-semibold text-red-600 hover:text-red-500"
+              >
+                Fechar aviso
+              </button>
+            </div>
+          </div>
+        )}
 
         {step === 1 && (
           <div className="flex flex-col gap-8 mt-2 animate-fade-in">

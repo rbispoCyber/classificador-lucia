@@ -5,6 +5,7 @@ import base64
 import matplotlib
 matplotlib.use('Agg')  # Backend não-interativo para servidor
 import matplotlib.pyplot as plt
+from fastapi import HTTPException
 
 def calcular_rfn(poro, perm):
     """
@@ -102,15 +103,31 @@ def processar_planilha(file_bytes: bytes, col_poro: str, col_perm: str) -> dict:
     Lê o Excel em memória, aplica os cálculos linha a linha, 
     gera dados para o gráfico e retorna o novo Excel em Base64.
     """
-    df = pd.read_excel(BytesIO(file_bytes))
+    try:
+        df = pd.read_excel(BytesIO(file_bytes))
+    except Exception:
+        raise HTTPException(status_code=400, detail="O arquivo enviado não pôde ser lido. Verifique se é um Excel válido (.xlsx ou .xls).")
     
     # Validação rápida de colunas
     if col_poro not in df.columns or col_perm not in df.columns:
-        raise ValueError("Colunas especificadas não encontradas na planilha.")
+        raise HTTPException(status_code=400, detail="As colunas selecionadas não existem na planilha.")
 
-    # Converte para numérico, forçando erros para NaN
+    # 1. Força a conversão para número, textos viram NaN
     df[col_poro] = pd.to_numeric(df[col_poro], errors='coerce')
     df[col_perm] = pd.to_numeric(df[col_perm], errors='coerce')
+
+    # 2. Deleta sumariamente qualquer linha que ficou vazia
+    df = df.dropna(subset=[col_poro, col_perm]).copy()
+
+    # 3. Propriedades físicas não podem ser <= 0 (causa crash no logaritmo)
+    df = df[(df[col_poro] > 0) & (df[col_perm] > 0)]
+
+    # 4. Trava final: após a limpeza sobrou algum dado válido?
+    if df.empty:
+        raise HTTPException(
+            status_code=400, 
+            detail="Após a limpeza de textos e células vazias, não sobrou nenhum dado válido. Garanta que as colunas possuam números estritamente positivos."
+        )
 
     # Calcula o RFN
     df['RFN_Calculado'] = df.apply(lambda row: calcular_rfn(row[col_poro], row[col_perm]), axis=1)

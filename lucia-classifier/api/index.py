@@ -24,6 +24,8 @@ async def obter_colunas(file: UploadFile = File(...)):
         conteudo = await file.read()
         colunas = extrair_colunas(conteudo)
         return JSONResponse(content={"colunas": colunas})
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Erro em obter_colunas: {e}")
         import traceback
@@ -42,6 +44,8 @@ async def processar_dados(
         resultado = processar_planilha(conteudo, col_poro, col_perm)
         # Agora retornamos um JSON puro
         return JSONResponse(content=resultado)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
