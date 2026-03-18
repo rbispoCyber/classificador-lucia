@@ -1,7 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.responses import Response, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from app.lucia_core import processar_planilha, extrair_colunas
+from api.app.lucia_core import processar_planilha, extrair_colunas
 
 app = FastAPI(title="API Petrofísica - Classificação de Lucia")
 
