@@ -6,6 +6,6 @@
     "frontend"
   ],
   "scripts": {
-    "build": "cd frontend && npm install --include=dev && npm run build && cd .. && rm -rf dist && mv frontend/dist ./dist"
+    "build": "npm run build --workspace=frontend && rm -rf dist && cp -r frontend/dist dist"
   }
 }
