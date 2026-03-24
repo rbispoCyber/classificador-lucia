@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, type DragEvent } from 'react';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
 import Plot from 'react-plotly.js'; // Importando o Plotly para o gráfico único
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ScatterChart, Scatter, ZAxis, CartesianGrid } from 'recharts';
 
@@ -130,36 +131,76 @@ function App() {
     }
   };
 
-  const baixarRelatorioCompleto = async () => {
+  const baixarRelatorioCompletoOffline = async () => {
     if (!file || poroCol === 'nenhum' || permCol === 'nenhum') return;
     setIsProcessing(true);
     setErrorMsg(null);
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("col_poro", poroCol);
-    formData.append("col_perm", permCol);
-
     try {
-      const response = await axios.post(`/api/processar_ambos`, formData);
-      const { arquivo_b64 } = response.data;
+      // 1. Lê o arquivo Excel localmente
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: 'array' });
+      const primeiraAba = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[primeiraAba];
+      const df = XLSX.utils.sheet_to_json(worksheet);
 
-      const byteCharacters = atob(arquivo_b64);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
-      const blob = new Blob([new Uint8Array(byteNumbers)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "RoFlow_Analise_Completa.xlsx";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
+      // 2. Motor Matemático Offline (Lucia + GHE)
+      const A = 9.7982, B = 12.0803, C = 8.6711, D = 8.2965;
+      const limites_ghe = [0.0938, 0.1875, 0.375, 0.75, 1.5, 3.0, 6.0, 12.0, 24.0, 48.0];
+
+      const dadosProcessados = df.map((linha: any) => {
+        const phi = Number(linha[poroCol] || linha.Porosidade || linha.PHI || 0);
+        const k = Number(linha[permCol] || linha.Permeabilidade || linha.K || 0);
+
+        let rfn = 0, classeLucia = "N.C";
+        let fzi = 0, classeGhe = "N.C";
+
+        if (phi > 0 && phi < 1 && k > 0) {
+          // --- LUCIA ---
+          const logK = Math.log10(k);
+          const logPhi = Math.log10(phi);
+          const logRfn = (logK - A - C * logPhi) / (-B - D * logPhi);
+          rfn = Math.pow(10, logRfn);
+          if (rfn < 1.5) classeLucia = 'Classe 1';
+          else if (rfn < 2.5) classeLucia = 'Classe 2';
+          else if (rfn < 4.0) classeLucia = 'Classe 3';
+
+          // --- GHE (Amaefule + Corbett) ---
+          const rqi = 0.0314 * Math.sqrt(k / phi);
+          const phi_z = phi / (1 - phi);
+          fzi = rqi / phi_z;
+          
+          if (fzi < limites_ghe[0]) classeGhe = "N.C";
+          else if (fzi < limites_ghe[1]) classeGhe = "GHE 01";
+          else if (fzi < limites_ghe[2]) classeGhe = "GHE 02";
+          else if (fzi < limites_ghe[3]) classeGhe = "GHE 03";
+          else if (fzi < limites_ghe[4]) classeGhe = "GHE 04";
+          else if (fzi < limites_ghe[5]) classeGhe = "GHE 05";
+          else if (fzi < limites_ghe[6]) classeGhe = "GHE 06";
+          else if (fzi < limites_ghe[7]) classeGhe = "GHE 07";
+          else if (fzi < limites_ghe[8]) classeGhe = "GHE 08";
+          else if (fzi < limites_ghe[9]) classeGhe = "GHE 09";
+          else classeGhe = "GHE 10";
+        }
+
+        return {
+          ...linha,
+          "RFN_Lucia": rfn > 0 ? rfn.toFixed(4) : "N.C",
+          "Classe_Lucia": classeLucia,
+          "FZI_GHE": fzi > 0 ? fzi.toFixed(4) : "N.C",
+          "Classe_GHE": classeGhe
+        };
+      });
+
+      // 3. Exporta diretamente pelo navegador
+      const novaWS = XLSX.utils.json_to_sheet(dadosProcessados);
+      const novoWB = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(novoWB, novaWS, "Analise_Completa_RonCore");
+      XLSX.writeFile(novoWB, "RonCore_Analise_Completa.xlsx");
 
     } catch (error) {
-      console.error("Erro no download completo:", error);
-      alert("Houve um erro ao gerar o relatório completo.");
+      console.error("Erro no processamento offline:", error);
+      alert("Erro ao processar arquivo localmente.");
     } finally {
       setIsProcessing(false);
     }
@@ -902,7 +943,7 @@ function App() {
                   </a>
                 )}
                 <button
-                  onClick={baixarRelatorioCompleto}
+                  onClick={baixarRelatorioCompletoOffline}
                   className="flex-1 flex justify-center items-center py-3 px-6 rounded-xl shadow-lg text-white font-bold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 transform hover:-translate-y-1 transition-all duration-300"
                 >
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
