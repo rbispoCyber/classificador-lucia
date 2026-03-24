@@ -1,3 +1,5 @@
+import sys
+import os
 import numpy as np
 import pandas as pd
 from io import BytesIO
@@ -5,6 +7,10 @@ import base64
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.responses import Response, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+
+# Força o diretório atual no path para garantir que 'app' seja encontrado
+sys.path.append(os.path.dirname(__file__))
+
 from app.lucia_core import processar_planilha, extrair_colunas
 
 app = FastAPI(title="API Petrofísica - Classificação de Lucia e GHE")
