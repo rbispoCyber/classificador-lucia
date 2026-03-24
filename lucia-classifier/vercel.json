@@ -1,16 +1,23 @@
 {
+  "headers": [
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
       "destination": "/api/index.py"
     },
     {
-      "source": "/assets/(.*)",
-      "destination": "/dist/assets/$1"
-    },
-    {
       "source": "/(.*)",
-      "destination": "/dist/index.html"
+      "destination": "/index.html"
     }
   ]
 }
