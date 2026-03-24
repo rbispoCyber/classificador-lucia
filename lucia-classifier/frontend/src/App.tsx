@@ -1,4 +1,4 @@
-import React, { useState, useRef, type DragEvent } from 'react';
+import React, { useState, useRef, useEffect, type DragEvent } from 'react';
 import axios from 'axios';
 import Plot from 'react-plotly.js'; // Importando o Plotly para o gráfico único
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ScatterChart, Scatter, ZAxis, CartesianGrid } from 'recharts';
@@ -26,6 +26,27 @@ function App() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const [chartTheme, setChartTheme] = useState<'dark' | 'light'>('light');
+
+  // Estado para capturar o evento de instalação do PWA
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -339,20 +360,37 @@ function App() {
             Análise de perfis, classificação de Lucia e identificação de Unidades de Fluxo em segundos.
           </p>
 
-          <button 
-            onClick={handleScrollToApp}
-            className="group flex flex-col items-center gap-4 text-slate-400 hover:text-white transition-all duration-300"
-          >
-            <span className="text-xs uppercase tracking-[0.4em] font-bold opacity-60 group-hover:opacity-100 transition-opacity">
-              Iniciar Análise
-            </span>
-            {/* Ícone dentro de um botão translúcido com brilho */}
-            <div className="p-4 bg-white/5 rounded-full border border-white/10 group-hover:bg-white/10 group-hover:shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-all">
-              <svg className="w-6 h-6 animate-bounce text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-              </svg>
-            </div>
-          </button>
+          <div className="flex flex-col md:flex-row items-center justify-center gap-12">
+            <button 
+              onClick={handleScrollToApp}
+              className="group flex flex-col items-center gap-4 text-slate-400 hover:text-white transition-all duration-300"
+            >
+              <span className="text-xs uppercase tracking-[0.4em] font-bold opacity-60 group-hover:opacity-100 transition-opacity">
+                Iniciar Análise
+              </span>
+              <div className="p-4 bg-white/5 rounded-full border border-white/10 group-hover:bg-white/10 group-hover:shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-all">
+                <svg className="w-6 h-6 animate-bounce text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+              </div>
+            </button>
+
+            {deferredPrompt && (
+              <button 
+                onClick={handleInstallClick}
+                className="group flex flex-col items-center gap-4 text-slate-400 hover:text-white transition-all duration-300"
+              >
+                <span className="text-xs uppercase tracking-[0.4em] font-bold opacity-60 group-hover:opacity-100 transition-opacity">
+                  Instalar App
+                </span>
+                <div className="p-4 bg-emerald-500/10 rounded-full border border-emerald-500/20 group-hover:bg-emerald-500/20 group-hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] transition-all">
+                  <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                </div>
+              </button>
+            )}
+          </div>
         </div>
         </div>
       </div>
@@ -820,6 +858,20 @@ function App() {
           </div>
         )}
       </div>
+      {/* Botão Flutuante de Instalação (PWA) */}
+      {deferredPrompt && (
+        <button
+          onClick={handleInstallClick}
+          className="fixed bottom-8 right-8 z-50 flex items-center gap-3 px-5 py-3 bg-[#131b2f]/80 backdrop-blur-xl border border-emerald-500/30 rounded-full shadow-[0_0_30px_rgba(0,0,0,0.5)] hover:bg-emerald-500/10 hover:border-emerald-500/50 hover:scale-105 transition-all duration-300 group"
+        >
+          <div className="p-2 bg-emerald-500/20 rounded-full group-hover:bg-emerald-500/30 transition-colors">
+            <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+          </div>
+          <span className="text-sm font-bold text-emerald-400 tracking-wide uppercase">Instalar App</span>
+        </button>
+      )}
     </div>
     </div>
   );
