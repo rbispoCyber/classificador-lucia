@@ -193,12 +193,13 @@ function App() {
       const perm = Number(d.Permeabilidade || d[eixoY] || d['K (mD)'] || 0);
       return {
         poro: poro,
+        perm: perm,
         parametro: abaAtiva === 'lucia' ? Number(d.RFN_Calculado) : Number(d.FZI),
         classe: abaAtiva === 'lucia' ? d.Classe_Lucia : d.Classe_GHE,
         fill: getCorClasse(abaAtiva === 'lucia' ? d.Classe_Lucia : d.Classe_GHE)
       };
     });
-    return rawData.filter(d => !isNaN(d.parametro) && d.parametro > 0 && d.poro > 0 && d.classe !== 'N.C');
+    return rawData.filter(d => !isNaN(d.parametro) && d.parametro > 0 && d.poro > 0 && d.perm > 0 && d.classe !== 'N.C');
   };
 
   const distribuicaoData = chartData.length > 0 ? obterDadosDistribuicao() : [];
