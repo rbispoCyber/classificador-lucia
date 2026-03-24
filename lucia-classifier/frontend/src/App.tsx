@@ -188,13 +188,17 @@ function App() {
   };
 
   const obterDadosDispersaoSecundaria = () => {
-    const rawData = chartData.filter(d => d[eixoX] !== undefined && Number(d[eixoX]) > 0).map(d => ({
-      poro: Number(d[eixoX]),
-      parametro: abaAtiva === 'lucia' ? Number(d.RFN_Calculado) : Number(d.FZI),
-      classe: abaAtiva === 'lucia' ? d.Classe_Lucia : d.Classe_GHE,
-      fill: getCorClasse(abaAtiva === 'lucia' ? d.Classe_Lucia : d.Classe_GHE)
-    }));
-    return rawData.filter(d => !isNaN(d.parametro) && d.parametro > 0 && d.classe !== 'N.C');
+    const rawData = chartData.map(d => {
+      const poro = Number(d.Porosidade || d[eixoX] || d['Porosidade (frac)'] || 0);
+      const perm = Number(d.Permeabilidade || d[eixoY] || d['K (mD)'] || 0);
+      return {
+        poro: poro,
+        parametro: abaAtiva === 'lucia' ? Number(d.RFN_Calculado) : Number(d.FZI),
+        classe: abaAtiva === 'lucia' ? d.Classe_Lucia : d.Classe_GHE,
+        fill: getCorClasse(abaAtiva === 'lucia' ? d.Classe_Lucia : d.Classe_GHE)
+      };
+    });
+    return rawData.filter(d => !isNaN(d.parametro) && d.parametro > 0 && d.poro > 0 && d.classe !== 'N.C');
   };
 
   const distribuicaoData = chartData.length > 0 ? obterDadosDistribuicao() : [];
@@ -214,16 +218,20 @@ function App() {
 
     // 1. Monta os pontos das rochas
     const traces = classes.map(classe => {
-      const dadosFiltrados = chartData.filter(d => d.Classe_Lucia === classe && d[eixoX] > 0 && d[eixoY] > 0);
+      const dadosFiltrados = chartData.filter(d => {
+        const poro = Number(d.Porosidade || d[eixoX] || 0);
+        const perm = Number(d.Permeabilidade || d[eixoY] || 0);
+        return d.Classe_Lucia === classe && poro > 0 && perm > 0;
+      });
       return {
-        x: dadosFiltrados.map(d => d[eixoX]),
-        y: dadosFiltrados.map(d => d[eixoY]),
+        x: dadosFiltrados.map(d => Number(d.Porosidade || d[eixoX] || 0)),
+        y: dadosFiltrados.map(d => Number(d.Permeabilidade || d[eixoY] || 0)),
         text: dadosFiltrados.map(d => `RFN: ${d.RFN_Calculado ? d.RFN_Calculado.toFixed(4) : 'N/A'}`),
         mode: 'markers',
         type: 'scatter',
         name: classe,
         marker: { color: coresClasses[classe], size: 7 },
-        hovertemplate: `<b>${classe}</b><br>${eixoX}: %{x:.2e}<br>${eixoY}: %{y:.2e} mD<br>%{text}<extra></extra>`
+        hovertemplate: `<b>${classe}</b><br>Φ: %{x:.4f}<br>K: %{y:.2e} mD<br>%{text}<extra></extra>`
       };
     }).filter(trace => trace.x.length > 0);
 
@@ -254,15 +262,19 @@ function App() {
 
     // 1. Plotagem dos dados reais (Pontos coloridos de acordo com o FZI)
     const traces = nomes_ghe.map((classe, index) => {
-      const dadosFiltrados = chartData.filter(d => d.Classe_GHE === classe && d[eixoX] > 0 && d[eixoY] > 0);
+      const dadosFiltrados = chartData.filter(d => {
+        const poro = Number(d.Porosidade || d[eixoX] || 0);
+        const perm = Number(d.Permeabilidade || d[eixoY] || 0);
+        return d.Classe_GHE === classe && poro > 0 && perm > 0;
+      });
       return {
-        x: dadosFiltrados.map(d => d[eixoX]),
-        y: dadosFiltrados.map(d => d[eixoY]),
+        x: dadosFiltrados.map(d => Number(d.Porosidade || d[eixoX] || 0)),
+        y: dadosFiltrados.map(d => Number(d.Permeabilidade || d[eixoY] || 0)),
         text: dadosFiltrados.map(d => `FZI: ${d.FZI ? d.FZI.toFixed(3) : 'N/A'}`),
         mode: 'markers',
         type: 'scatter',
         name: classe, // Isso fará a legenda dos pontos aparecer certinha
-        marker: { color: cores_paleta[index], size: 7, line: { color: 'white', width: 0.5 } }, // Borda branca fina para destaque
+        marker: { color: coresClasses[classe] || cores_paleta[index], size: 7, line: { color: 'white', width: 0.5 } }, // Borda branca fina para destaque
         hovertemplate: `<b>${classe}</b><br>Φ: %{x:.2f}<br>K: %{y:.2e} mD<br>%{text}<extra></extra>`
       };
     }).filter(trace => trace.x.length > 0);
