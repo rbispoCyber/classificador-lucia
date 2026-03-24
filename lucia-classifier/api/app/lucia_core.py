@@ -136,8 +136,8 @@ def processar_planilha(file_bytes: bytes, col_poro: str, col_perm: str) -> dict:
     df['Classe_Lucia'] = df['RFN_Calculado'].apply(classificar_lucia)
 
     # 1. Prepara os dados pro gráfico Recharts (mantido por compatibilidade)
-    df_grafico = df.dropna(subset=[col_poro, col_perm, 'Classe_Lucia'])
-    dados_grafico = df_grafico[[col_poro, col_perm, 'Classe_Lucia']].to_dict(orient='records')
+    df_grafico = df.dropna(subset=[col_poro, col_perm, 'Classe_Lucia', 'RFN_Calculado'])
+    dados_grafico = df_grafico[[col_poro, col_perm, 'Classe_Lucia', 'RFN_Calculado']].to_dict(orient='records')
 
     # 2. Gera a imagem científica via Matplotlib
     grafico_img_b64 = gerar_crossplot_lucia(df_grafico, col_poro, col_perm)
