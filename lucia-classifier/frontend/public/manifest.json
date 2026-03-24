@@ -1,0 +1,21 @@
+{
+  "name": "RoFlow - Suíte Petrofísica",
+  "short_name": "RoFlow",
+  "description": "Motor petrofísico para classificação de carbonatos.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/logo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "/logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
