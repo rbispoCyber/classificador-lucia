@@ -2,7 +2,6 @@
 const CACHE_NAME = 'roncore-analytics-v1';
 const ASSETS = [
   '/',
-  '/index.html',
   '/logo.jpg',
   '/manifest.json'
 ];
