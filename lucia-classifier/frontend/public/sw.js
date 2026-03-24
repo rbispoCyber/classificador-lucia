@@ -1,25 +1,24 @@
-// Service Worker básico para conformidade PWA
-const CACHE_NAME = 'roncore-analytics-v1';
-const ASSETS = [
+// Service Worker Inteligente RonCore Analytics
+const CACHE_NAME = 'roncore-analytics-v2';
+const STATIC_ASSETS = [
   '/',
+  '/index.html',
   '/logo.jpg',
   '/manifest.json'
 ];
 
-// Instalação do Service Worker - Cache inicial
+// Instalação: Cacheia arquivos estáticos básicos
 self.addEventListener('install', (event) => {
-  console.log('[SW] Instalando Service Worker...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Cacheando assets principais');
-      return cache.addAll(ASSETS);
+      return cache.addAll(STATIC_ASSETS);
     })
   );
+  self.skipWaiting();
 });
 
-// Ativação e limpeza de caches antigos
+// Ativação: Limpa caches antigos
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Service Worker Ativo');
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
@@ -27,28 +26,29 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
+  self.clients.claim();
 });
 
-// Interceptor de requisições - Essencial para PWA e Offline
+// Estratégia Stale-While-Revalidate: Serve do cache e atualiza por trás
 self.addEventListener('fetch', (event) => {
-  // Ignorar requisições de API para não cachear dados dinâmicos de forma errada
+  // Não cacheia chamadas de API (embora agora usemos quase nada de API)
   if (event.request.url.includes('/api/')) return;
 
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Se a rede funcionar, retorna a resposta original
-        return response;
-      })
-      .catch(() => {
-        // Se a rede falhar, tenta buscar no cache
-        return caches.match(event.request).then((cachedResponse) => {
-          if (cachedResponse) return cachedResponse;
-          // Se não tiver no cache e for uma navegação, retorna a home para manter o PWA vivo
-          if (event.request.mode === 'navigate') {
-            return caches.match('/');
-          }
-        });
-      })
+    caches.match(event.request).then((cachedResponse) => {
+      const fetchPromise = fetch(event.request).then((networkResponse) => {
+        // Cacheia a nova resposta para uso futuro
+        if (networkResponse && networkResponse.status === 200) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return networkResponse;
+      });
+
+      // Retorna o cache se existir, se não espera a rede
+      return cachedResponse || fetchPromise;
+    })
   );
 });

@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect, type DragEvent } from 'react';
-import axios from 'axios';
 import * as XLSX from 'xlsx';
 import Plot from 'react-plotly.js'; // Importando o Plotly para o gráfico único
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ScatterChart, Scatter, ZAxis, CartesianGrid } from 'recharts';
@@ -87,16 +86,25 @@ function App() {
       return;
     }
     setFile(selectedFile);
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-
+    
     try {
-      const response = await axios.post(`/api/colunas`, formData);
-      setColumns(response.data.colunas);
-      setStep(2);
+      // LEITURA 100% OFFLINE DAS COLUNAS
+      const data = await selectedFile.arrayBuffer();
+      const workbook = XLSX.read(data, { type: 'array' });
+      const primeiraAba = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[primeiraAba];
+      const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+      
+      if (json.length > 0) {
+        const headers = (json[0] as any[]).map(h => String(h).trim());
+        setColumns(headers);
+        setStep(2);
+      } else {
+        alert("O arquivo parece estar vazio.");
+      }
     } catch (error: any) {
-      const mensagem = error.response?.data?.detail || "Ocorreu um erro de conexão com o servidor.";
-      setErrorMsg(mensagem);
+      console.error("Erro na leitura offline:", error);
+      setErrorMsg("Erro ao ler colunas do arquivo localmente.");
     }
   };
 
@@ -105,27 +113,77 @@ function App() {
     setIsProcessing(true);
     setErrorMsg(null);
 
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('col_poro', poroCol);
-    formData.append('col_perm', permCol);
-
-    // DEFINE QUAL ROTA CHAMAR COM BASE NA ABA ATIVA
-    const rotaApi = abaAtiva === 'lucia' ? '/api/processar' : '/api/processar_ghe';
+    // LÓGICA 100% OFFLINE PARA CLASSIFICAR
     try {
-      const response = await axios.post(rotaApi, formData);
-      const { dados_grafico, arquivo_b64 } = response.data;
-      setChartData(dados_grafico); setEixoX(poroCol); setEixoY(permCol);
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: 'array' });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const df = XLSX.utils.sheet_to_json(worksheet);
 
-      const byteCharacters = atob(arquivo_b64);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
-      const blob = new Blob([new Uint8Array(byteNumbers)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const A = 9.7982, B = 12.0803, C = 8.6711, D = 8.2965;
+      const limites_ghe = [0.0938, 0.1875, 0.375, 0.75, 1.5, 3.0, 6.0, 12.0, 24.0, 48.0];
+
+      const resultados = df.map((linha: any) => {
+        const phi = Number(linha[poroCol] || linha.Porosidade || 0);
+        const k = Number(linha[permCol] || linha.Permeabilidade || 0);
+        
+        let rfn = 0, classeLucia = "N.C";
+        let fzi = 0, classeGhe = "N.C";
+
+        if (phi > 0 && phi < 1 && k > 0) {
+          // --- LUCIA ---
+          const logK = Math.log10(k);
+          const logPhi = Math.log10(phi);
+          const logRfn = (logK - A - C * logPhi) / (-B - D * logPhi);
+          rfn = Math.pow(10, logRfn);
+          if (rfn < 1.5) classeLucia = 'Classe 1';
+          else if (rfn < 2.5) classeLucia = 'Classe 2';
+          else if (rfn < 4.0) classeLucia = 'Classe 3';
+
+          // --- GHE ---
+          const rqi = 0.0314 * Math.sqrt(k / phi);
+          const phi_z = phi / (1 - phi);
+          fzi = rqi / phi_z;
+          if (fzi < limites_ghe[0]) classeGhe = "N.C";
+          else if (fzi < limites_ghe[1]) classeGhe = "GHE 01";
+          else if (fzi < limites_ghe[2]) classeGhe = "GHE 02";
+          else if (fzi < limites_ghe[3]) classeGhe = "GHE 03";
+          else if (fzi < limites_ghe[4]) classeGhe = "GHE 04";
+          else if (fzi < limites_ghe[5]) classeGhe = "GHE 05";
+          else if (fzi < limites_ghe[6]) classeGhe = "GHE 06";
+          else if (fzi < limites_ghe[7]) classeGhe = "GHE 07";
+          else if (fzi < limites_ghe[8]) classeGhe = "GHE 08";
+          else if (fzi < limites_ghe[9]) classeGhe = "GHE 09";
+          else classeGhe = "GHE 10";
+        }
+
+        return {
+          ...linha,
+          Porosidade: phi,
+          Permeabilidade: k,
+          RFN_Calculado: rfn,
+          Classe_Lucia: classeLucia,
+          FZI: fzi,
+          Classe_GHE: classeGhe
+        };
+      }).filter(r => r.Porosidade > 0 && r.Permeabilidade > 0);
+
+      setChartData(resultados);
+      setEixoX(poroCol);
+      setEixoY(permCol);
+
+      // Gera o Excel para download da aba atual
+      const novaWS = XLSX.utils.json_to_sheet(resultados);
+      const novoWB = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(novoWB, novaWS, abaAtiva === 'lucia' ? "Lucia" : "GHE");
+      const excelBuffer = XLSX.write(novoWB, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       setDownloadUrl(window.URL.createObjectURL(blob));
+      
       setStep(3);
     } catch (error: any) {
-      const mensagem = error.response?.data?.detail || "Ocorreu um erro no processamento.";
-      setErrorMsg(mensagem);
+      console.error("Erro no processamento offline:", error);
+      setErrorMsg("Erro ao processar dados localmente.");
     } finally {
       setIsProcessing(false);
     }
