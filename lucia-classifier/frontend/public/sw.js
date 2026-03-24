@@ -1,9 +1,10 @@
 // Service Worker Inteligente RonCore Analytics
-const CACHE_NAME = 'roncore-analytics-v2';
+const CACHE_NAME = 'roncore-analytics-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/logo.jpg',
+  '/logo.png',
   '/manifest.json'
 ];
 
@@ -29,25 +30,43 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Estratégia Stale-While-Revalidate: Serve do cache e atualiza por trás
+// Estratégia de Fetch: Híbrida para PWA Offline
 self.addEventListener('fetch', (event) => {
-  // Não cacheia chamadas de API (embora agora usemos quase nada de API)
+  // Ignora APIs
   if (event.request.url.includes('/api/')) return;
 
+  const url = new URL(event.request.url);
+
+  // 1. Navegação (Home/Index): Cache First + Ignorar Search Params
+  // Isso permite que o PWA abra mesmo com ?source=pwa no link
+  if (event.request.mode === 'navigate' || STATIC_ASSETS.includes(url.pathname)) {
+    event.respondWith(
+      caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
+        const fetchPromise = fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
+          }
+          return networkResponse;
+        }).catch(() => null);
+
+        return cachedResponse || fetchPromise;
+      })
+    );
+    return;
+  }
+
+  // 2. Stale-While-Revalidate para outros ativos (JS, CSS, etc)
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request).then((networkResponse) => {
-        // Cacheia a nova resposta para uso futuro
         if (networkResponse && networkResponse.status === 200) {
           const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
         }
         return networkResponse;
-      });
+      }).catch(() => null);
 
-      // Retorna o cache se existir, se não espera a rede
       return cachedResponse || fetchPromise;
     })
   );
