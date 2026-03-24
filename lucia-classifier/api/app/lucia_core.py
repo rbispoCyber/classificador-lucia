@@ -104,8 +104,10 @@ def processar_planilha(file_bytes: bytes, col_poro: str, col_perm: str) -> dict:
     gera dados para o gráfico e retorna o novo Excel em Base64.
     """
     try:
-        df = pd.read_excel(BytesIO(file_bytes), engine='openpyxl')
-    except Exception:
+        # Detecta o motor correto com base na extensão (ou tenta o padrão)
+        df = pd.read_excel(BytesIO(file_bytes)) 
+    except Exception as e:
+        print(f"Erro na leitura do Excel: {e}")
         raise HTTPException(status_code=400, detail="O arquivo enviado não pôde ser lido. Verifique se é um Excel válido (.xlsx ou .xls).")
     
     # Validação rápida de colunas
@@ -158,5 +160,9 @@ def processar_planilha(file_bytes: bytes, col_poro: str, col_perm: str) -> dict:
 
 def extrair_colunas(file_bytes: bytes) -> list:
     """Lê apenas o cabeçalho do Excel para o Frontend montar o Dropdown."""
-    df = pd.read_excel(BytesIO(file_bytes), engine='openpyxl', nrows=0)
-    return df.columns.tolist()
+    try:
+        df = pd.read_excel(BytesIO(file_bytes), nrows=0)
+        return df.columns.tolist()
+    except Exception as e:
+        print(f"Erro em extrair_colunas: {e}")
+        return []

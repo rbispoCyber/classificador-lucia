@@ -46,6 +46,7 @@ async def processar_dados(
     try:
         conteudo = await file.read()
         resultado = processar_planilha(conteudo, col_poro, col_perm)
+        
         # Agora retornamos um JSON puro
         return JSONResponse(content=resultado)
     except HTTPException:
@@ -60,10 +61,11 @@ async def processar_dados(
 async def processar_ghe(file: UploadFile = File(...), col_poro: str = Form(...), col_perm: str = Form(...)):
     try:
         contents = await file.read()
-        df = pd.read_excel(BytesIO(contents), engine='openpyxl')
+        engine = 'openpyxl' if file.filename.endswith('.xlsx') else 'xlrd'
+        df = pd.read_excel(BytesIO(contents), engine=engine)
     except Exception as e:
-        print(f"Erro ao ler Excel no GHE: {e}")
-        raise HTTPException(status_code=400, detail=f"Erro ao ler o arquivo Excel: {str(e)}")
+        print(f"Erro ao ler Excel no GHE [{file.filename}]: {e}")
+        raise HTTPException(status_code=400, detail=f"Erro ao ler o arquivo Excel ({file.filename}): {str(e)}")
 
     if col_poro not in df.columns or col_perm not in df.columns:
         raise HTTPException(status_code=400, detail="As colunas selecionadas não existem na planilha.")
