@@ -40,7 +40,10 @@ function App() {
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      alert("Para instalar:\n\n1. No Chrome/Edge: Clique nos três pontos (⋮) no topo e escolha 'Instalar App'.\n2. No iPhone: Toque no botão de Compartilhar e escolha 'Adicionar à Tela de Início'.");
+      return;
+    }
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
@@ -375,13 +378,14 @@ function App() {
               </div>
             </button>
 
-            {deferredPrompt && (
+            {/* Botão de Instalação sempre visível se não estiver em modo App (standalone) */}
+            {!window.matchMedia('(display-mode: standalone)').matches && (
               <button 
                 onClick={handleInstallClick}
                 className="group flex flex-col items-center gap-4 text-slate-400 hover:text-white transition-all duration-300"
               >
                 <span className="text-xs uppercase tracking-[0.4em] font-bold opacity-60 group-hover:opacity-100 transition-opacity">
-                  Instalar App
+                  {deferredPrompt ? 'Instalar App' : 'App Desktop'}
                 </span>
                 <div className="p-4 bg-emerald-500/10 rounded-full border border-emerald-500/20 group-hover:bg-emerald-500/20 group-hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] transition-all">
                   <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -858,8 +862,8 @@ function App() {
           </div>
         )}
       </div>
-      {/* Botão Flutuante de Instalação (PWA) */}
-      {deferredPrompt && (
+      {/* Botão Flutuante sempre visível se não instalado */}
+      {!window.matchMedia('(display-mode: standalone)').matches && (
         <button
           onClick={handleInstallClick}
           className="fixed bottom-8 right-8 z-50 flex items-center gap-3 px-5 py-3 bg-[#131b2f]/80 backdrop-blur-xl border border-emerald-500/30 rounded-full shadow-[0_0_30px_rgba(0,0,0,0.5)] hover:bg-emerald-500/10 hover:border-emerald-500/50 hover:scale-105 transition-all duration-300 group"
@@ -869,7 +873,9 @@ function App() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
           </div>
-          <span className="text-sm font-bold text-emerald-400 tracking-wide uppercase">Instalar App</span>
+          <span className="text-sm font-bold text-emerald-400 tracking-wide uppercase">
+            {deferredPrompt ? 'Instalar App' : 'Instalar'}
+          </span>
         </button>
       )}
     </div>
