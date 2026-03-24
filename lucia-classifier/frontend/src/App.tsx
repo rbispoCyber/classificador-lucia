@@ -60,8 +60,8 @@ function App() {
     'N.C': '#64748b'       // bg-slate-500
   };
 
-  const nomes_ghe = ['GHE 01', 'GHE 02', 'GHE 03', 'GHE 04', 'GHE 05', 'GHE 06', 'GHE 07', 'GHE 08', 'GHE 09', 'GHE 10', 'N.C'];
-  const cores_paleta_ghe = ['#e11d48', '#ea580c', '#d97706', '#65a30d', '#16a34a', '#059669', '#0891b2', '#2563eb', '#4f46e5', '#475569', '#9ca3af'];
+  const nomes_ghe = ['N.C', 'GHE 01', 'GHE 02', 'GHE 03', 'GHE 04', 'GHE 05', 'GHE 06', 'GHE 07', 'GHE 08', 'GHE 09', 'GHE 10'];
+  const cores_paleta_ghe = ['#9ca3af', '#e11d48', '#ea580c', '#d97706', '#65a30d', '#16a34a', '#059669', '#0891b2', '#2563eb', '#4f46e5', '#475569'];
   const coresGhe: Record<string, string> = {};
   nomes_ghe.forEach((nome, i) => coresGhe[nome] = cores_paleta_ghe[i]);
 
@@ -257,12 +257,11 @@ function App() {
   // --- LÓGICA DO PLOTLY PARA GHE (k vs Phi com 10 Curvas e Pontos Sincronizados) ---
   const montarDadosGhePlotly = () => {
 
-    const nomes_ghe = ['GHE 01', 'GHE 02', 'GHE 03', 'GHE 04', 'GHE 05', 'GHE 06', 'GHE 07', 'GHE 08', 'GHE 09', 'GHE 10', 'N.C'];
-    // A mesma paleta de cores para os pontos e para as linhas (o último é o cinza do N.C)
-    const cores_paleta = ['#e11d48', '#ea580c', '#d97706', '#65a30d', '#16a34a', '#059669', '#0891b2', '#2563eb', '#4f46e5', '#475569', '#9ca3af'];
+    const nomes_ghe_local = ['N.C', 'GHE 01', 'GHE 02', 'GHE 03', 'GHE 04', 'GHE 05', 'GHE 06', 'GHE 07', 'GHE 08', 'GHE 09', 'GHE 10'];
+    const cores_paleta = ['#9ca3af', '#e11d48', '#ea580c', '#d97706', '#65a30d', '#16a34a', '#059669', '#0891b2', '#2563eb', '#4f46e5', '#475569'];
 
     // 1. Plotagem dos dados reais (Pontos coloridos de acordo com o FZI)
-    const traces = nomes_ghe.map((classe, index) => {
+    const traces = nomes_ghe_local.map((classe, index) => {
       const dadosFiltrados = chartData.filter(d => {
         const poro = Number(d.Porosidade || d[eixoX] || 0);
         const perm = Number(d.Permeabilidade || d[eixoY] || 0);
@@ -280,8 +279,8 @@ function App() {
       };
     }).filter(trace => trace.x.length > 0);
 
-    // 2. Montagem das 10 Curvas Teóricas do GHE (Linhas de referência)
-    const fzi_valores = [0.05, 0.15, 0.5, 1.5, 4.5, 13.5, 40, 120, 360, 1000];
+    // 2. Montagem das 10 Curvas Teóricas do GHE (Linhas de referência de Corbett)
+    const fzi_valores = [0.0938, 0.1875, 0.375, 0.75, 1.5, 3.0, 6.0, 12.0, 24.0, 48.0];
 
     const curvas = fzi_valores.map((fzi, index) => {
       const x_vals = [];
@@ -298,9 +297,9 @@ function App() {
         x: x_vals,
         y: y_vals,
         mode: 'lines',
-        name: `Curva ${nomes_ghe[index]}`,
-        line: { width: 1.0, color: cores_paleta[index] }, // Mesma cor do ponto correspondente
-        showlegend: false, // Esconde a legenda da linha para não poluir, já que a cor do ponto já explica
+        name: `Limite ${nomes_ghe_local[index + 1]}`,
+        line: { width: 1.0, color: cores_paleta[index + 1] }, // Corresponde à cor da classe que começa ali
+        showlegend: false, 
         hoverinfo: 'skip'
       };
     });

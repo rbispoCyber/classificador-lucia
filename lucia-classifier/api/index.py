@@ -118,11 +118,11 @@ async def processar_ghe(file: UploadFile = File(...), col_poro: str = Form(...),
     # 4. Classificação exata nas 10 Unidades de Fluxo (GHE 01 a GHE 10)
     # Estes são os limites matemáticos (pontos médios logarítmicos) entre as 10 curvas 
     # que desenhamos no gráfico. Eles decidem onde uma classe termina e a outra começa.
-    limites_fzi = [0, 0.0866, 0.2738, 0.866, 2.598, 7.794, 23.238, 69.282, 207.846, 600.0, float('inf')]
-    nomes_ghe = ['GHE 01', 'GHE 02', 'GHE 03', 'GHE 04', 'GHE 05', 'GHE 06', 'GHE 07', 'GHE 08', 'GHE 09', 'GHE 10']
+    limites_fzi = [0, 0.0938, 0.1875, 0.375, 0.75, 1.5, 3.0, 6.0, 12.0, 24.0, 48.0, float('inf')]
+    nomes_ghe_labels = ['N.C', 'GHE 01', 'GHE 02', 'GHE 03', 'GHE 04', 'GHE 05', 'GHE 06', 'GHE 07', 'GHE 08', 'GHE 09', 'GHE 10']
     
     # Fatiamento automático
-    df['Classe_GHE'] = pd.cut(df['FZI'], bins=limites_fzi, labels=nomes_ghe)
+    df['Classe_GHE'] = pd.cut(df['FZI'], bins=limites_fzi, labels=nomes_ghe_labels)
     
     # Converte para texto e protege contra dados nulos
     df['Classe_GHE'] = df['Classe_GHE'].astype(str).replace('nan', 'N.C')
@@ -184,9 +184,9 @@ async def processar_ambos(
         df['Phi_z'] = df[col_poro] / (1 - df[col_poro])
         df['FZI'] = df['RQI'] / df['Phi_z']
         
-        limites_fzi = [0, 0.0866, 0.2738, 0.866, 2.598, 7.794, 23.238, 69.282, 207.846, 600.0, float('inf')]
-        nomes_ghe = ['GHE 01', 'GHE 02', 'GHE 03', 'GHE 04', 'GHE 05', 'GHE 06', 'GHE 07', 'GHE 08', 'GHE 09', 'GHE 10']
-        df['Classe_GHE'] = pd.cut(df['FZI'], bins=limites_fzi, labels=nomes_ghe)
+        limites_fzi = [0, 0.0938, 0.1875, 0.375, 0.75, 1.5, 3.0, 6.0, 12.0, 24.0, 48.0, float('inf')]
+        nomes_ghe_labels = ['N.C', 'GHE 01', 'GHE 02', 'GHE 03', 'GHE 04', 'GHE 05', 'GHE 06', 'GHE 07', 'GHE 08', 'GHE 09', 'GHE 10']
+        df['Classe_GHE'] = pd.cut(df['FZI'], bins=limites_fzi, labels=nomes_ghe_labels)
         df['Classe_GHE'] = df['Classe_GHE'].astype(str).replace('nan', 'N.C')
 
         # 4. EXPORTAÇÃO
