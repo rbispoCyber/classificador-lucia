@@ -131,6 +131,56 @@ async def processar_ghe(file: UploadFile = File(...), col_poro: str = Form(...),
     arquivo_b64 = base64.b64encode(output.read()).decode('utf-8')
 
     return {"dados_grafico": dados_grafico, "arquivo_b64": arquivo_b64}
+
+@app.post("/api/processar_ambos")
+async def processar_ambos(
+    file: UploadFile = File(...),
+    col_poro: str = Form(...),
+    col_perm: str = Form(...)
+):
+    """Recebe o arquivo e as colunas, calcula Lucia e GHE, e devolve o Excel completo."""
+    try:
+        conteudo = await file.read()
+        engine = 'openpyxl' if file.filename.endswith('.xlsx') else 'xlrd'
+        df = pd.read_excel(BytesIO(conteudo), engine=engine)
+        
+        # 1. Limpeza comum
+        df[col_poro] = pd.to_numeric(df[col_poro], errors='coerce')
+        df[col_perm] = pd.to_numeric(df[col_perm], errors='coerce')
+        df = df.dropna(subset=[col_poro, col_perm]).copy()
+        df = df[(df[col_poro] > 0) & (df[col_perm] > 0)]
+
+        if df.empty:
+            raise HTTPException(status_code=400, detail="Sem dados válidos após a limpeza.")
+
+        # 2. CÁLCULO LUCIA
+        from app.lucia_core import calcular_rfn, classificar_lucia
+        df['RFN_Lucia'] = df.apply(lambda row: calcular_rfn(row[col_poro], row[col_perm]), axis=1)
+        df['Classe_Lucia'] = df['RFN_Lucia'].apply(classificar_lucia)
+
+        # 3. CÁLCULO GHE
+        df['RQI'] = 0.0314 * np.sqrt(df[col_perm] / df[col_poro])
+        df['Phi_z'] = df[col_poro] / (1 - df[col_poro])
+        df['FZI'] = df['RQI'] / df['Phi_z']
+        
+        limites_fzi = [0, 0.0866, 0.2738, 0.866, 2.598, 7.794, 23.238, 69.282, 207.846, 600.0, float('inf')]
+        nomes_ghe = ['GHE 01', 'GHE 02', 'GHE 03', 'GHE 04', 'GHE 05', 'GHE 06', 'GHE 07', 'GHE 08', 'GHE 09', 'GHE 10']
+        df['Classe_GHE'] = pd.cut(df['FZI'], bins=limites_fzi, labels=nomes_ghe)
+        df['Classe_GHE'] = df['Classe_GHE'].astype(str).replace('nan', 'N.C')
+
+        # 4. EXPORTAÇÃO
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Relatorio_RonCore_Completo')
+        output.seek(0)
+        
+        arquivo_b64 = base64.b64encode(output.read()).decode('utf-8')
+        return {"arquivo_b64": arquivo_b64}
+
+    except Exception as e:
+        import traceback
+        print(f"Erro em processar_ambos: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=str(e))
     
 @app.exception_handler(Exception)
 async def internal_exception_handler(request, exc):

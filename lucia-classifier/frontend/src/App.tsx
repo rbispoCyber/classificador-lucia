@@ -111,7 +111,6 @@ function App() {
 
     // DEFINE QUAL ROTA CHAMAR COM BASE NA ABA ATIVA
     const rotaApi = abaAtiva === 'lucia' ? '/api/processar' : '/api/processar_ghe';
-
     try {
       const response = await axios.post(rotaApi, formData);
       const { dados_grafico, arquivo_b64 } = response.data;
@@ -124,8 +123,43 @@ function App() {
       setDownloadUrl(window.URL.createObjectURL(blob));
       setStep(3);
     } catch (error: any) {
-      const mensagem = error.response?.data?.detail || "Ocorreu um erro de conexão com o servidor.";
+      const mensagem = error.response?.data?.detail || "Ocorreu um erro no processamento.";
       setErrorMsg(mensagem);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const baixarRelatorioCompleto = async () => {
+    if (!file || poroCol === 'nenhum' || permCol === 'nenhum') return;
+    setIsProcessing(true);
+    setErrorMsg(null);
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("col_poro", poroCol);
+    formData.append("col_perm", permCol);
+
+    try {
+      const response = await axios.post(`/api/processar_ambos`, formData);
+      const { arquivo_b64 } = response.data;
+
+      const byteCharacters = atob(arquivo_b64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
+      const blob = new Blob([new Uint8Array(byteNumbers)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "RoFlow_Analise_Completa.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+    } catch (error) {
+      console.error("Erro no download completo:", error);
+      alert("Houve um erro ao gerar o relatório completo.");
     } finally {
       setIsProcessing(false);
     }
@@ -843,19 +877,29 @@ function App() {
 
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 mt-8">
-              {downloadUrl && (
-                <a
-                  href={downloadUrl}
-                  download={abaAtiva === 'lucia' ? 'Classificado_Lucia.xlsx' : 'Classificado_GHE.xlsx'}
-                  className="flex-1 flex justify-center items-center py-3 px-6 rounded-lg shadow-md text-white font-semibold bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 transform hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+            <div className="flex flex-col gap-4 mt-8 w-full">
+              <div className="flex flex-col sm:flex-row gap-4">
+                {downloadUrl && (
+                  <a
+                    href={downloadUrl}
+                    download={abaAtiva === 'lucia' ? 'Classificado_Lucia.xlsx' : 'Classificado_GHE.xlsx'}
+                    className="flex-1 flex justify-center items-center py-3 px-6 rounded-xl shadow-md text-white font-semibold bg-slate-800 hover:bg-slate-700 transform hover:-translate-y-0.5 transition-all duration-200"
+                  >
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Baixar Aba Atual
+                  </a>
+                )}
+                <button
+                  onClick={baixarRelatorioCompleto}
+                  className="flex-1 flex justify-center items-center py-3 px-6 rounded-xl shadow-lg text-white font-bold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 transform hover:-translate-y-1 transition-all duration-300"
                 >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                  Baixar Planilha
-                </a>
-              )}
-              <button onClick={handleReset} className="flex-1 flex justify-center items-center py-3 px-6 rounded-xl shadow-sm border border-slate-600 text-slate-300 font-semibold bg-slate-800/50 backdrop-blur-md hover:bg-slate-700/80 transform hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 focus:ring-offset-slate-900">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                  Relatório Completo
+                </button>
+              </div>
+              
+              <button onClick={handleReset} className="w-full flex justify-center items-center py-3 px-6 rounded-xl shadow-sm border border-slate-600 text-slate-300 font-semibold bg-slate-800/20 backdrop-blur-md hover:bg-slate-700/40 transform hover:-translate-y-0.5 transition-all duration-200">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                 Analisar Outro Arquivo
               </button>
             </div>
