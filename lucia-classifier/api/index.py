@@ -36,9 +36,8 @@ async def obter_colunas(file: UploadFile = File(...)):
     
     try:
         conteudo = await file.read()
-        # Se for xlsx usa openpyxl, se for xls usa xlrd (pd.read_excel cuida disso se xlr estiver instalado)
-        df = pd.read_excel(BytesIO(conteudo), nrows=0)
-        return JSONResponse(content={"colunas": df.columns.tolist()})
+        colunas = extrair_colunas(conteudo)
+        return JSONResponse(content={"colunas": colunas})
     except HTTPException:
         raise
     except Exception as e:
@@ -77,6 +76,17 @@ async def processar_ghe(file: UploadFile = File(...), col_poro: str = Form(...),
     except Exception as e:
         print(f"Erro ao ler Excel no GHE [{file.filename}]: {e}")
         raise HTTPException(status_code=400, detail=f"Erro ao ler o arquivo Excel ({file.filename}): {str(e)}")
+
+    # ==========================================
+    # PADRONIZAÇÃO DE COLUNAS (Sugestão do Usuário)
+    # ==========================================
+    df.columns = [str(c).strip() for c in df.columns]
+    df = df.drop(columns=['GHE', 'LUCIA', 'Classe_GHE', 'Classe_Lucia', 'FZI', 'RQI', 'RFN_Lucia'], errors='ignore')
+    
+    # Renomeia internamente para facilitar a matemática
+    mapeamento = {col_poro: 'Porosidade', col_perm: 'Permeabilidade'}
+    df = df.rename(columns=mapeamento)
+    col_poro, col_perm = 'Porosidade', 'Permeabilidade'
 
     if col_poro not in df.columns or col_perm not in df.columns:
         raise HTTPException(status_code=400, detail="As colunas selecionadas não existem na planilha.")
@@ -144,6 +154,17 @@ async def processar_ambos(
         engine = 'openpyxl' if file.filename.endswith('.xlsx') else 'xlrd'
         df = pd.read_excel(BytesIO(conteudo), engine=engine)
         
+        # ==========================================
+        # PADRONIZAÇÃO DE COLUNAS (Sugestão do Usuário)
+        # ==========================================
+        df.columns = [str(c).strip() for c in df.columns]
+        df = df.drop(columns=['GHE', 'LUCIA', 'Classe_GHE', 'Classe_Lucia', 'FZI', 'RQI', 'RFN_Lucia'], errors='ignore')
+        
+        # Renomeia internamente para facilitar a matemática
+        mapeamento = {col_poro: 'Porosidade', col_perm: 'Permeabilidade'}
+        df = df.rename(columns=mapeamento)
+        col_poro, col_perm = 'Porosidade', 'Permeabilidade'
+
         # 1. Limpeza comum
         df[col_poro] = pd.to_numeric(df[col_poro], errors='coerce')
         df[col_perm] = pd.to_numeric(df[col_perm], errors='coerce')

@@ -110,6 +110,17 @@ def processar_planilha(file_bytes: bytes, col_poro: str, col_perm: str) -> dict:
         print(f"Erro na leitura do Excel: {e}")
         raise HTTPException(status_code=400, detail="O arquivo enviado não pôde ser lido. Verifique se é um Excel válido (.xlsx ou .xls).")
     
+    # ==========================================
+    # PADRONIZAÇÃO DE COLUNAS (Sugestão do Usuário)
+    # ==========================================
+    df.columns = [str(c).strip() for c in df.columns]
+    df = df.drop(columns=['GHE', 'LUCIA', 'Classe_GHE', 'Classe_Lucia', 'FZI', 'RQI', 'RFN_Lucia', 'RFN_Calculado'], errors='ignore')
+    
+    # Renomeia internamente para facilitar a matemática
+    mapeamento = {col_poro: 'Porosidade', col_perm: 'Permeabilidade'}
+    df = df.rename(columns=mapeamento)
+    col_poro, col_perm = 'Porosidade', 'Permeabilidade'
+
     # Validação rápida de colunas
     if col_poro not in df.columns or col_perm not in df.columns:
         raise HTTPException(status_code=400, detail="As colunas selecionadas não existem na planilha.")
@@ -162,7 +173,8 @@ def extrair_colunas(file_bytes: bytes) -> list:
     """Lê apenas o cabeçalho do Excel para o Frontend montar o Dropdown."""
     try:
         df = pd.read_excel(BytesIO(file_bytes), nrows=0)
-        return df.columns.tolist()
+        # Limpa espaços em branco dos nomes das colunas para o frontend
+        return [str(c).strip() for c in df.columns.tolist()]
     except Exception as e:
         print(f"Erro em extrair_colunas: {e}")
         return []
