@@ -18,6 +18,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/api/health")
+async def health_check():
+    return {"status": "ok", "message": "API RonCore Analytics is running on Vercel"}
+
 @app.post("/api/colunas")
 async def obter_colunas(file: UploadFile = File(...)):
     """Recebe o arquivo e devolve os nomes das colunas para o usuário escolher."""
@@ -26,8 +30,9 @@ async def obter_colunas(file: UploadFile = File(...)):
     
     try:
         conteudo = await file.read()
-        colunas = extrair_colunas(conteudo)
-        return JSONResponse(content={"colunas": colunas})
+        # Se for xlsx usa openpyxl, se for xls usa xlrd (pd.read_excel cuida disso se xlr estiver instalado)
+        df = pd.read_excel(BytesIO(conteudo), nrows=0)
+        return JSONResponse(content={"colunas": df.columns.tolist()})
     except HTTPException:
         raise
     except Exception as e:
