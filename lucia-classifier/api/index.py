@@ -31,10 +31,10 @@ async def obter_colunas(file: UploadFile = File(...)):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Erro em obter_colunas: {e}")
         import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        error_detail = traceback.format_exc()
+        print(f"Erro em obter_colunas: {error_detail}")
+        raise HTTPException(status_code=500, detail=f"Erro no processamento do Excel: {str(e)}")
 
 @app.post("/api/processar")
 async def processar_dados(
@@ -52,17 +52,18 @@ async def processar_dados(
         raise
     except Exception as e:
         import traceback
-        with open("error_500.log", "w", encoding="utf-8") as f:
-            traceback.print_exc(file=f)
-        raise HTTPException(status_code=500, detail=str(e))
+        error_detail = traceback.format_exc()
+        print(f"Erro em processar_dados: {error_detail}")
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
 @app.post("/api/processar_ghe")
 async def processar_ghe(file: UploadFile = File(...), col_poro: str = Form(...), col_perm: str = Form(...)):
     try:
         contents = await file.read()
-        df = pd.read_excel(BytesIO(contents))
-    except Exception:
-        raise HTTPException(status_code=400, detail="Erro ao ler o arquivo Excel.")
+        df = pd.read_excel(BytesIO(contents), engine='openpyxl')
+    except Exception as e:
+        print(f"Erro ao ler Excel no GHE: {e}")
+        raise HTTPException(status_code=400, detail=f"Erro ao ler o arquivo Excel: {str(e)}")
 
     if col_poro not in df.columns or col_perm not in df.columns:
         raise HTTPException(status_code=400, detail="As colunas selecionadas não existem na planilha.")
@@ -121,9 +122,8 @@ async def processar_ghe(file: UploadFile = File(...), col_poro: str = Form(...),
 @app.exception_handler(Exception)
 async def internal_exception_handler(request, exc):
     import traceback
-    with open("error_500.log", "a", encoding="utf-8") as f:
-        f.write(f"Rote: {request.url.path}\n")
-        traceback.print_exc(file=f)
-    return JSONResponse(status_code=500, content={"detail": str(exc)})
+    error_detail = traceback.format_exc()
+    print(f"EXCEPTION GLOBAL [{request.url.path}]: {error_detail}")
+    return JSONResponse(status_code=500, content={"detail": str(exc), "trace": error_detail})
 
 
