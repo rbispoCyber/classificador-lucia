@@ -118,7 +118,13 @@ function App() {
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data, { type: 'array' });
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const df = XLSX.utils.sheet_to_json(worksheet);
+      const df_raw = XLSX.utils.sheet_to_json(worksheet);
+      // Normalização: Trim nas chaves das colunas para evitar incompatibilidade com o estado columns
+      const df = (df_raw as any[]).map(row => {
+        const newRow: any = {};
+        Object.keys(row).forEach(k => newRow[k.trim()] = row[k]);
+        return newRow;
+      });
 
       const A = 9.7982, B = 12.0803, C = 8.6711, D = 8.2965;
       const limites_ghe = [0.0938, 0.1875, 0.375, 0.75, 1.5, 3.0, 6.0, 12.0, 24.0, 48.0];
@@ -208,7 +214,12 @@ function App() {
       const workbook = XLSX.read(data, { type: 'array' });
       const primeiraAba = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[primeiraAba];
-      const df = XLSX.utils.sheet_to_json(worksheet);
+      const df_raw = XLSX.utils.sheet_to_json(worksheet);
+      const df = (df_raw as any[]).map(row => {
+        const newRow: any = {};
+        Object.keys(row).forEach(k => newRow[k.trim()] = row[k]);
+        return newRow;
+      });
 
       // 2. Motor Matemático Offline (Lucia + GHE)
       const A = 9.7982, B = 12.0803, C = 8.6711, D = 8.2965;
@@ -361,6 +372,7 @@ function App() {
       }
       return {
         x: x, y: y, mode: 'lines',
+        type: 'scatter',
         line: { dash: 'dash', color: '#9ca3af', width: 1.5 },
         showlegend: false, hoverinfo: 'skip'
       };
@@ -412,6 +424,7 @@ function App() {
         x: x_vals,
         y: y_vals,
         mode: 'lines',
+        type: 'scatter',
         name: `Limite ${nomes_ghe_local[index + 1]}`,
         line: { width: 1.0, color: cores_paleta[index + 1] }, // Corresponde à cor da classe que começa ali
         showlegend: false, 
@@ -883,7 +896,7 @@ function App() {
                     <h3 className={`text-center text-sm font-semibold mb-2 mt-2 ${chartTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
                       Método GHE: Permeabilidade vs Porosidade (Amaefule et al., 1993)
                     </h3>
-                    {chartData.length > 0 && eixoX !== 'nenhum' && eixoY !== 'nenhum' ? (
+                    {eixoX !== 'nenhum' && eixoY !== 'nenhum' ? (
                       <Plot
                         data={montarDadosGhePlotly() as any}
                         useResizeHandler={true}
@@ -902,9 +915,11 @@ function App() {
                           yaxis: {
                             title: { text: eixoY, standoff: 15 },
                             type: 'log',    // O eixo Y é log (Permeabilidade)
+                            range: [-7, 8], // Mesma range do Lucia para consistência
                             gridcolor: chartTheme === 'dark' ? '#1e293b' : '#e5e7eb',
                             zerolinecolor: chartTheme === 'dark' ? '#334155' : '#9ca3af',
-                            tickformat: '.1e', exponentformat: 'power'
+                            tickformat: '.1e', exponentformat: 'power',
+                            dtick: 1
                           },
                           plot_bgcolor: chartTheme === 'dark' ? '#0B1120' : '#ffffff',
                           paper_bgcolor: chartTheme === 'dark' ? '#0B1120' : '#ffffff',
