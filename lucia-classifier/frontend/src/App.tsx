@@ -123,10 +123,18 @@ function App() {
       const A = 9.7982, B = 12.0803, C = 8.6711, D = 8.2965;
       const limites_ghe = [0.0938, 0.1875, 0.375, 0.75, 1.5, 3.0, 6.0, 12.0, 24.0, 48.0];
 
+      const toNum = (val: any) => {
+        if (typeof val === 'string') val = val.replace(',', '.');
+        return Number(val);
+      };
+
       const resultados = df.map((linha: any) => {
-        const phi = Number(linha[poroCol] || linha.Porosidade || 0);
-        const k = Number(linha[permCol] || linha.Permeabilidade || 0);
+        let phi = toNum(linha[poroCol] || linha.Porosidade || 0);
+        const k = toNum(linha[permCol] || linha.Permeabilidade || 0);
         
+        // Auto-detecta porcentagem (ex: 15 ao invés de 0.15)
+        if (phi > 1) phi = phi / 100;
+
         let rfn = 0, classeLucia = "N.C";
         let fzi = 0, classeGhe = "N.C";
 
@@ -193,7 +201,7 @@ function App() {
     if (!file || poroCol === 'nenhum' || permCol === 'nenhum') return;
     setIsProcessing(true);
     setErrorMsg(null);
-
+    
     try {
       // 1. Lê o arquivo Excel localmente
       const data = await file.arrayBuffer();
@@ -206,9 +214,17 @@ function App() {
       const A = 9.7982, B = 12.0803, C = 8.6711, D = 8.2965;
       const limites_ghe = [0.0938, 0.1875, 0.375, 0.75, 1.5, 3.0, 6.0, 12.0, 24.0, 48.0];
 
+      const toNum = (val: any) => {
+        if (typeof val === 'string') val = val.replace(',', '.');
+        return Number(val);
+      };
+
       const dadosProcessados = df.map((linha: any) => {
-        const phi = Number(linha[poroCol] || linha.Porosidade || linha.PHI || 0);
-        const k = Number(linha[permCol] || linha.Permeabilidade || linha.K || 0);
+        let phi = toNum(linha[poroCol] || linha.Porosidade || linha.PHI || 0);
+        const k = toNum(linha[permCol] || linha.Permeabilidade || linha.K || 0);
+
+        // Auto-detecta porcentagem
+        if (phi > 1) phi = phi / 100;
 
         let rfn = 0, classeLucia = "N.C";
         let fzi = 0, classeGhe = "N.C";
@@ -373,7 +389,7 @@ function App() {
         mode: 'markers',
         type: 'scatter',
         name: classe, // Isso fará a legenda dos pontos aparecer certinha
-        marker: { color: coresClasses[classe] || cores_paleta[index], size: 7, line: { color: 'white', width: 0.5 } }, // Borda branca fina para destaque
+        marker: { color: coresGhe[classe] || cores_paleta[index], size: 7, line: { color: 'white', width: 0.5 } }, // Borda branca fina para destaque
         hovertemplate: `<b>${classe}</b><br>Φ: %{x:.2f}<br>K: %{y:.2e} mD<br>%{text}<extra></extra>`
       };
     }).filter(trace => trace.x.length > 0);
@@ -555,14 +571,14 @@ function App() {
         {/* MENU DE ABAS */}
         <div className="flex justify-center border-b border-slate-700 mb-8">
           <button
-            onClick={() => { setAbaAtiva('lucia'); handleReset(); }}
+            onClick={() => setAbaAtiva('lucia')}
             className={`py-2 px-6 font-semibold text-sm border-b-2 transition-colors ${abaAtiva === 'lucia' ? 'border-blue-400 text-blue-400' : 'border-transparent text-slate-500 hover:text-slate-300'
               }`}
           >
             Método de Lucia
           </button>
           <button
-            onClick={() => { setAbaAtiva('ghe'); handleReset(); }}
+            onClick={() => setAbaAtiva('ghe')}
             className={`py-2 px-6 font-semibold text-sm border-b-2 transition-colors ${abaAtiva === 'ghe' ? 'border-emerald-400 text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-300'
               }`}
           >
