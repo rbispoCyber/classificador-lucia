@@ -553,7 +553,7 @@ function App() {
             </button>
 
             {/* Botão de Instalação sempre visível se não estiver em modo App (standalone) */}
-            {!window.matchMedia('(display-mode: standalone)').matches && (
+            {!window.matchMedia('(display-mode: standalone)').matches &&  !isProcessing && (
               <button 
                 onClick={handleInstallClick}
                 className="group flex flex-col items-center gap-4 text-slate-400 hover:text-white transition-all duration-300"
@@ -1049,7 +1049,7 @@ function App() {
         )}
       </div>
       {/* Botão Flutuante sempre visível se não instalado */}
-      {!window.matchMedia('(display-mode: standalone)').matches && (
+      {!window.matchMedia('(display-mode: standalone)').matches && !isProcessing && (
         <button
           onClick={handleInstallClick}
           className="fixed bottom-8 right-8 z-50 flex items-center gap-3 px-5 py-3 bg-[#131b2f]/80 backdrop-blur-xl border border-emerald-500/30 rounded-full shadow-[0_0_30px_rgba(0,0,0,0.5)] hover:bg-emerald-500/10 hover:border-emerald-500/50 hover:scale-105 transition-all duration-300 group"
