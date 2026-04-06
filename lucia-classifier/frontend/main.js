@@ -7,7 +7,7 @@ function createWindow () {
     width: 1280,
     height: 800,
     title: "RoFlow - Suíte Petrofísica",
-    // icon: path.join(__dirname, 'public/logo.png'), // Descomente depois se quiser o ícone na barra!
+    // icon: path.join(__dirname, 'public/roncore-logo-v5.png'), // Descomente depois se quiser o ícone na barra!
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false // Necessário se quiser usar nodeIntegration: true puro

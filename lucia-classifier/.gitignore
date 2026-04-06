@@ -22,3 +22,12 @@ dist-ssr/
 # System
 .DS_Store
 Thumbs.db
+
+# Electron & Builds
+release/
+dist/
+RoFlow-*/
+*.pak
+*.bin
+*.exe
+*.log
