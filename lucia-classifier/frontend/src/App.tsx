@@ -513,9 +513,10 @@ function App() {
               <div className="absolute inset-0 translate-x-[-150%] skew-x-[-20deg] bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-shine z-20 pointer-events-none"></div>
 
               <img 
-                src="logo.png" 
+                src="logo.png?v=3" 
                 alt="Logo RonCore Analytics" 
-                className="w-32 h-32 md:w-36 md:h-36 object-contain p-1 rounded-[1.7rem] relative z-10 filter drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]" 
+                style={{ clipPath: 'polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)' }}
+                className="w-32 h-32 md:w-40 md:h-40 object-cover relative z-10 filter drop-shadow-[0_0_20px_rgba(59,130,246,0.6)] transform transition-transform duration-700 hover:scale-105" 
               />
             </div>
           </div>
