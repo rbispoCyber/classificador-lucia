@@ -836,7 +836,7 @@ function App() {
                         style={{ width: '100%', height: '90%' }}
                         layout={{
                           autosize: true,
-                          margin: { t: 10, r: 20, b: 40, l: 80 },
+                          margin: { t: 10, r: 20, b: 80, l: 80 },
                           hovermode: 'closest',
                           xaxis: {
                             title: { text: eixoX },
@@ -860,7 +860,7 @@ function App() {
                           plot_bgcolor: chartTheme === 'dark' ? '#0B1120' : '#ffffff',
                           paper_bgcolor: chartTheme === 'dark' ? '#0B1120' : '#ffffff',
                           font: { color: chartTheme === 'dark' ? '#cbd5e1' : '#374151' },
-                          legend: { orientation: 'h', y: -0.2 }
+                          legend: { orientation: 'h', y: -0.25 }
                         }}
                         config={{
                           displaylogo: false,
@@ -893,7 +893,7 @@ function App() {
                         style={{ width: '100%', height: '90%' }}
                         layout={{
                           autosize: true,
-                          margin: { t: 10, r: 20, b: 40, l: 80 },
+                          margin: { t: 10, r: 20, b: 80, l: 80 },
                           hovermode: 'closest',
                           xaxis: {
                             title: { text: eixoX },
@@ -915,7 +915,7 @@ function App() {
                           paper_bgcolor: chartTheme === 'dark' ? '#0B1120' : '#ffffff',
                           font: { color: chartTheme === 'dark' ? '#ffffff' : '#374151' },
                           hoverlabel: { font: { color: chartTheme === 'dark' ? '#ffffff' : '#111827' } },
-                          legend: { orientation: 'h', y: -0.2 } // Legenda horizontal embaixo
+                          legend: { orientation: 'h', y: -0.25 } // Legenda horizontal embaixo
                         }}
                         config={{
                           displaylogo: false,

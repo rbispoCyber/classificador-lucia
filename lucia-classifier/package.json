@@ -6,6 +6,8 @@
     "frontend"
   ],
   "scripts": {
-    "build": "npm run build --workspace=frontend && rm -rf dist && cp -r frontend/dist dist"
+    "dev": "npm run dev --workspace=frontend",
+    "build": "npm run build --workspace=frontend",
+    "electron": "npm run electron --workspace=frontend"
   }
 }
