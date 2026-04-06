@@ -37,6 +37,10 @@
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: rgba(100, 116, 139, 0.6);
   }
+
+  .animate-shine {
+    animation: shine 1.5s ease-out infinite;
+  }
 }
 
 @keyframes fadeIn {
@@ -47,4 +51,9 @@
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(15px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shine {
+  0% { transform: translateX(-150%) skewX(-20deg); }
+  100% { transform: translateX(150%) skewX(-20deg); }
 }

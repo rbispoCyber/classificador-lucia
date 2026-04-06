@@ -501,11 +501,24 @@ function App() {
         {/* Efeito Glassmorphism em todo o Hero Content para ficar "translúcido" e chique */}
         <div className="relative z-10 flex flex-col items-center text-center px-12 py-16 max-w-4xl bg-white/[0.02] backdrop-blur-md border border-white/5 rounded-[40px] shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] transition-transform duration-700 hover:scale-[1.01] hover:bg-white/[0.03]">
           
-          <img 
-            src="logo.jpg" 
-            alt="Logo RonCore Analytics" 
-            className="w-32 h-32 md:w-36 md:h-36 object-cover rounded-3xl shadow-[0_0_40px_rgba(59,130,246,0.3)] mb-8 border border-white/10" 
-          />
+          {/* LOGO ANIMADA COM ANÉIS DE NEON E EFEITOS GLASS */}
+          <div className="relative mb-10 group perspective-1000">
+            {/* Brilho pulsante externo */}
+            <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 via-emerald-400 to-indigo-500 rounded-[2.2rem] blur-xl opacity-40 group-hover:opacity-80 transition-all duration-700 animate-[spin_8s_linear_infinite]"></div>
+            
+            {/* Cápsula de borda fina */}
+            <div className="relative bg-[#0B1120]/80 backdrop-blur-xl p-1.5 rounded-[2rem] shadow-2xl border border-white/10 group-hover:border-blue-400/50 transition-colors duration-500 overflow-hidden transform group-hover:scale-105">
+              
+              {/* Efeito de Reflexo (luz varrendo) na logo */}
+              <div className="absolute inset-0 translate-x-[-150%] skew-x-[-20deg] bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-shine z-20 pointer-events-none"></div>
+
+              <img 
+                src="logo.jpg" 
+                alt="Logo RonCore Analytics" 
+                className="w-32 h-32 md:w-36 md:h-36 object-cover rounded-[1.7rem] relative z-10 filter brightness-110 contrast-125" 
+              />
+            </div>
+          </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight mb-6 drop-shadow-2xl">
             RonCore <span className="bg-gradient-to-r from-blue-400 to-emerald-400 text-transparent bg-clip-text">Analytics</span>
