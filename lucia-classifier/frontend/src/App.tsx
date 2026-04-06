@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, type DragEvent } from 'react';
+import React, { useState, useRef, type DragEvent } from 'react';
 import * as XLSX from 'xlsx';
 import Plot from 'react-plotly.js'; // Importando o Plotly para o gráfico único
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ScatterChart, Scatter, ZAxis, CartesianGrid } from 'recharts';
@@ -26,30 +26,6 @@ function App() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const [chartTheme, setChartTheme] = useState<'dark' | 'light'>('light');
-
-  // Estado para capturar o evento de instalação do PWA
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-
-  useEffect(() => {
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
-
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) {
-      alert("Para instalar:\n\n1. No Chrome/Edge: Clique nos três pontos (⋮) no topo e escolha 'Instalar App'.\n2. No iPhone: Toque no botão de Compartilhar e escolha 'Adicionar à Tela de Início'.");
-      return;
-    }
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setDeferredPrompt(null);
-    }
-  };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -112,6 +88,9 @@ function App() {
     if (!file || poroCol === 'nenhum' || permCol === 'nenhum') return;
     setIsProcessing(true);
     setErrorMsg(null);
+
+    // Atraso simulado de 900ms para a animação "Fake Loading"
+    await new Promise(r => setTimeout(r, 900));
 
     // LÓGICA 100% OFFLINE PARA CLASSIFICAR
     try {
@@ -523,7 +502,7 @@ function App() {
         <div className="relative z-10 flex flex-col items-center text-center px-12 py-16 max-w-4xl bg-white/[0.02] backdrop-blur-md border border-white/5 rounded-[40px] shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] transition-transform duration-700 hover:scale-[1.01] hover:bg-white/[0.03]">
           
           <img 
-            src="/logo.jpg" 
+            src="logo.jpg" 
             alt="Logo RonCore Analytics" 
             className="w-32 h-32 md:w-36 md:h-36 object-cover rounded-3xl shadow-[0_0_40px_rgba(59,130,246,0.3)] mb-8 border border-white/10" 
           />
@@ -552,22 +531,7 @@ function App() {
               </div>
             </button>
 
-            {/* Botão de Instalação sempre visível se não estiver em modo App (standalone) */}
-            {!window.matchMedia('(display-mode: standalone)').matches &&  !isProcessing && (
-              <button 
-                onClick={handleInstallClick}
-                className="group flex flex-col items-center gap-4 text-slate-400 hover:text-white transition-all duration-300"
-              >
-                <span className="text-xs uppercase tracking-[0.4em] font-bold opacity-60 group-hover:opacity-100 transition-opacity">
-                  {deferredPrompt ? 'Instalar App' : 'App Desktop'}
-                </span>
-                <div className="p-4 bg-emerald-500/10 rounded-full border border-emerald-500/20 group-hover:bg-emerald-500/20 group-hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] transition-all">
-                  <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                </div>
-              </button>
-            )}
+            {/* Botão de Instalação (Removido para versão Electron) */}
           </div>
         </div>
         </div>
@@ -581,22 +545,31 @@ function App() {
         {/* Usando painel mais transparente para fundir melhor com a fluidez master */}
         <div className={`w-full bg-[#131b2f]/60 backdrop-blur-2xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.5)] border border-slate-700/50 p-8 relative z-10 ${step === 3 ? 'max-w-5xl' : (step === 1 ? 'max-w-3xl' : 'max-w-md')} transition-all duration-500 animate-fade-in`}>
 
-        {/* MENU DE ABAS */}
-        <div className="flex justify-center border-b border-slate-700 mb-8">
-          <button
-            onClick={() => setAbaAtiva('lucia')}
-            className={`py-2 px-6 font-semibold text-sm border-b-2 transition-colors ${abaAtiva === 'lucia' ? 'border-blue-400 text-blue-400' : 'border-transparent text-slate-500 hover:text-slate-300'
+        {/* MENU DE ABAS MÁGICO (PILL) */}
+        <div className="flex justify-center mb-10 w-full relative z-20">
+          <div className="relative flex rounded-full bg-[#0f172a]/80 backdrop-blur-md p-1 border border-slate-700/60 shadow-inner overflow-hidden max-w-[400px] w-full">
+            {/* Bolha Neon de Fundo que Desliza */}
+            <div 
+              className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full transition-transform duration-500 ease-out z-0
+              ${abaAtiva === 'lucia' 
+                ? 'translate-x-0 bg-gradient-to-r from-blue-600/80 to-blue-400/80 shadow-[0_0_15px_rgba(59,130,246,0.5)]' 
+                : 'translate-x-[calc(100%+8px)] bg-gradient-to-r from-emerald-600/80 to-emerald-400/80 shadow-[0_0_15px_rgba(16,185,129,0.5)]'
               }`}
-          >
-            Método de Lucia
-          </button>
-          <button
-            onClick={() => setAbaAtiva('ghe')}
-            className={`py-2 px-6 font-semibold text-sm border-b-2 transition-colors ${abaAtiva === 'ghe' ? 'border-emerald-400 text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-300'
-              }`}
-          >
-            Método GHE (FZI)
-          </button>
+            ></div>
+            
+            <button
+              onClick={() => setAbaAtiva('lucia')}
+              className={`relative z-10 flex-1 py-2.5 text-sm font-bold tracking-wide transition-colors duration-300 ${abaAtiva === 'lucia' ? 'text-white' : 'text-slate-400 hover:text-white'}`}
+            >
+              Método de Lucia
+            </button>
+            <button
+              onClick={() => setAbaAtiva('ghe')}
+              className={`relative z-10 flex-1 py-2.5 text-sm font-bold tracking-wide transition-colors duration-300 ${abaAtiva === 'ghe' ? 'text-white' : 'text-slate-400 hover:text-white'}`}
+            >
+              Método GHE (FZI)
+            </button>
+          </div>
         </div>
 
         {/* ALERTA DE ERRO */}
@@ -628,7 +601,21 @@ function App() {
               className="border-2 border-dashed border-blue-500/40 rounded-2xl p-12 flex flex-col items-center cursor-pointer bg-slate-800/40 backdrop-blur-md hover:bg-slate-800/60 hover:border-blue-400 hover:shadow-lg transition-all duration-300 group"
             >
               <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept=".xlsx, .xls" className="hidden" />
-              <div className="text-5xl mb-4 group-hover:scale-110 group-hover:-translate-y-1 transition-transform duration-300 drop-shadow-sm">📥</div>
+              <div className="relative mb-6 group-hover:scale-110 group-hover:-translate-y-2 transition-all duration-500">
+                <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-2xl scale-125 group-hover:bg-blue-400/40 transition-colors"></div>
+                <div className="relative z-10 flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 shadow-[0_8px_30px_rgb(0,0,0,0.5)] group-hover:border-blue-500/50 group-hover:shadow-[0_0_40px_rgba(59,130,246,0.3)] transition-all">
+                  {/* Ícone de Documento (Lembra a Planilha verde) */}
+                  <svg className="h-10 w-10 text-emerald-400 transition-transform duration-500 group-hover:-translate-y-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  {/* Ícone de Upload flutuante */}
+                  <div className="absolute -bottom-2 -right-2 flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600 to-blue-400 shadow-[0_4px_15px_rgba(59,130,246,0.5)] transition-all duration-300 group-hover:-translate-y-1">
+                    <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
               <p className="text-xl font-medium text-slate-200 text-center">Arraste sua planilha Excel aqui</p>
               <p className="text-sm text-slate-400 mt-2 font-medium">ou clique para selecionar o arquivo</p>
             </div>
@@ -795,12 +782,15 @@ function App() {
                 <option value="nenhum">Nenhum</option> {columns.map(col => <option key={col} value={col}>{col}</option>)}
               </select>
             </div>
-            <button onClick={handleClassificar} disabled={isProcessing} className="w-full py-3 px-4 rounded-lg shadow-md text-white font-semibold bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 transform hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 mt-4 flex justify-center items-center focus:ring-offset-slate-900">
+            <button onClick={handleClassificar} disabled={isProcessing} className={`w-full py-3 px-4 rounded-lg shadow-md text-white font-semibold transform transition-all duration-300 focus:outline-none mt-4 flex justify-center items-center overflow-hidden relative ${isProcessing ? 'bg-slate-800 border border-slate-700' : 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 hover:-translate-y-0.5 focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900'}`}>
               {isProcessing ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                  Processando...
-                </>
+                <div className="flex items-center">
+                  <div className="w-48 h-1.5 bg-slate-700 rounded-full overflow-hidden mr-4 relative">
+                    <div className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-blue-500 to-emerald-400 w-1/2 rounded-full animate-[ping_1.5s_ease-in-out_infinite] opacity-50"></div>
+                    <div className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-blue-400 to-emerald-300 w-1/2 rounded-full animate-bounce" style={{animationDuration: '0.8s'}}></div>
+                  </div>
+                  <span className="text-slate-300 text-sm animate-pulse tracking-widest font-mono font-bold textShadow">SCANNING...</span>
+                </div>
               ) : 'Processar e Gerar Gráfico'}
             </button>
             <button onClick={handleReset} className="w-full py-3 px-4 rounded-xl border border-slate-600 text-slate-300 font-semibold bg-slate-800/50 backdrop-blur-md hover:bg-slate-700/80 transform hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 focus:ring-offset-slate-900 mt-2 shadow-sm">Cancelar</button>
@@ -837,7 +827,7 @@ function App() {
 
                 <div className="flex flex-col lg:flex-row gap-6">
                   {/* GRÁFICO 1: PLOTLY (Interativo, Zoom nativo, Curvas Semi-Log) */}
-                  <div className={`w-full border shadow-sm rounded-2xl p-2 h-[500px] transition-colors ${chartTheme === 'dark' ? 'bg-slate-900/40 backdrop-blur-sm border-slate-700/80' : 'bg-white border-slate-300'}`}>
+                  <div className={`w-full rounded-2xl p-2 h-[500px] transition-all duration-500 shadow-sm z-10 ${chartTheme === 'dark' ? 'bg-[#0a0f1c] relative border border-transparent [background-clip:padding-box] before:absolute before:inset-0 before:-z-10 before:rounded-2xl before:m-[-1px] before:bg-gradient-to-br before:from-blue-500/60 before:via-slate-800 before:to-emerald-500/60' : 'bg-white border border-slate-300'}`}>
                     <h3 className={`text-center text-sm font-semibold mb-1 mt-2 ${chartTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>Linear vs Log (Interativo com Zoom)</h3>
                     {eixoX !== 'nenhum' && eixoY !== 'nenhum' ? (
                       <Plot
@@ -892,7 +882,7 @@ function App() {
 
                 <div className="flex flex-col gap-6">
                   {/* GRÁFICO GHE: k vs Porosidade com 10 Curvas */}
-                  <div className={`w-full border shadow-sm rounded-2xl p-4 h-[600px] transition-colors ${chartTheme === 'dark' ? 'bg-slate-900/40 backdrop-blur-sm border-slate-700/80' : 'bg-white border-slate-300'}`}>
+                  <div className={`w-full rounded-2xl p-4 h-[600px] transition-all duration-500 shadow-sm z-10 ${chartTheme === 'dark' ? 'bg-[#0a0f1c] relative border border-transparent [background-clip:padding-box] before:absolute before:inset-0 before:-z-10 before:rounded-2xl before:m-[-1px] before:bg-gradient-to-br before:from-emerald-500/60 before:via-slate-800 before:to-blue-500/60' : 'bg-white border border-slate-300'}`}>
                     <h3 className={`text-center text-sm font-semibold mb-2 mt-2 ${chartTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
                       Método GHE: Permeabilidade vs Porosidade (Amaefule et al., 1993)
                     </h3>
@@ -949,7 +939,7 @@ function App() {
               {chartData.length > 0 && eixoX !== 'nenhum' && eixoY !== 'nenhum' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 animate-slide-up-delayed">
                   {/* Gráfico de Distribuição (BarChart) */}
-                  <div className={`w-full border shadow-sm rounded-2xl p-4 h-[350px] transition-colors flex flex-col items-center ${chartTheme === 'dark' ? 'bg-[#0B1120] border-slate-700' : 'bg-white border-slate-300'}`}>
+                  <div className={`w-full rounded-2xl p-4 h-[350px] transition-all duration-500 shadow-sm flex flex-col items-center z-10 ${chartTheme === 'dark' ? 'bg-[#0a0f1c] relative border border-transparent [background-clip:padding-box] before:absolute before:inset-0 before:-z-10 before:rounded-2xl before:m-[-1px] before:bg-gradient-to-br before:from-purple-500/40 before:to-blue-500/40' : 'bg-white border border-slate-300'}`}>
                     <h3 className={`text-center text-sm font-bold mb-4 ${chartTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
                       Distribuição de Amostras
                     </h3>
@@ -982,7 +972,7 @@ function App() {
                   </div>
 
                   {/* Gráfico de Dispersão (ScatterChart) */}
-                  <div className={`w-full border shadow-sm rounded-2xl p-4 h-[350px] transition-colors flex flex-col items-center ${chartTheme === 'dark' ? 'bg-[#0B1120] border-slate-700' : 'bg-white border-slate-300'}`}>
+                  <div className={`w-full rounded-2xl p-4 h-[350px] transition-all duration-500 shadow-sm flex flex-col items-center z-10 ${chartTheme === 'dark' ? 'bg-[#0a0f1c] relative border border-transparent [background-clip:padding-box] before:absolute before:inset-0 before:-z-10 before:rounded-2xl before:m-[-1px] before:bg-gradient-to-br before:from-indigo-500/40 before:to-emerald-500/40' : 'bg-white border border-slate-300'}`}>
                     <h3 className={`text-center text-sm font-bold mb-4 ${chartTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
                       {abaAtiva === 'lucia' ? 'RFN vs Porosidade' : 'FZI vs Porosidade'}
                     </h3>
@@ -1013,6 +1003,56 @@ function App() {
                         </div>
                       ))}
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* === NOVA DATA TABLE DE AMOSTRAS === */}
+              {chartData.length > 0 && (
+                <div className="mt-8 animate-slide-up bg-[#0f172a]/80 backdrop-blur-md rounded-2xl border border-slate-700 overflow-hidden shadow-lg z-10 relative">
+                  <div className="px-6 py-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center relative">
+                    <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"></div>
+                    <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider">Amostra de Resultados (Top 15)</h3>
+                    <span className="text-xs text-slate-400 font-mono">Total processado: {chartData.length}</span>
+                  </div>
+                  <div className="overflow-x-auto custom-scrollbar">
+                    <table className="w-full text-sm text-left text-slate-300 min-w-[600px]">
+                      <thead className="text-xs text-slate-400 bg-slate-800/80 uppercase">
+                        <tr>
+                          <th className="px-6 py-3 font-semibold">Id / Ref</th>
+                          <th className="px-6 py-3 font-semibold">Porosidade (Φ)</th>
+                          <th className="px-6 py-3 font-semibold">Permeabilidade (k)</th>
+                          <th className="px-6 py-3 font-semibold">{abaAtiva === 'lucia' ? 'RFN' : 'FZI'}</th>
+                          <th className="px-6 py-3 font-semibold text-center">Classificação</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-700/50">
+                        {chartData.slice(0, 15).map((row, idx) => {
+                          const classeStr = abaAtiva === 'lucia' ? row.Classe_Lucia : row.Classe_GHE;
+                          const paramVal = abaAtiva === 'lucia' ? row.RFN_Calculado : row.FZI;
+                          return (
+                            <tr key={idx} className="hover:bg-slate-800/40 transition-colors">
+                              <td className="px-6 py-3 font-mono text-xs opacity-70">Linha {idx + 1}</td>
+                              <td className="px-6 py-3 font-mono">{(Number(row.Porosidade) * 100).toFixed(2)}%</td>
+                              <td className="px-6 py-3 font-mono">{Number(row.Permeabilidade).toExponential(2)}</td>
+                              <td className="px-6 py-3 font-mono text-blue-300">{Number(paramVal).toFixed(4)}</td>
+                              <td className="px-6 py-3 text-center">
+                                <span 
+                                  className="px-3 py-1 rounded-full text-xs font-bold shadow-sm inline-block min-w-[80px]"
+                                  style={{ 
+                                    backgroundColor: `${getCorClasse(classeStr)}30`,
+                                    color: getCorClasse(classeStr),
+                                    border: `1px solid ${getCorClasse(classeStr)}50` 
+                                  }}
+                                >
+                                  {classeStr}
+                                </span>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               )}
@@ -1048,22 +1088,7 @@ function App() {
           </div>
         )}
       </div>
-      {/* Botão Flutuante sempre visível se não instalado */}
-      {!window.matchMedia('(display-mode: standalone)').matches && !isProcessing && (
-        <button
-          onClick={handleInstallClick}
-          className="fixed bottom-8 right-8 z-50 flex items-center gap-3 px-5 py-3 bg-[#131b2f]/80 backdrop-blur-xl border border-emerald-500/30 rounded-full shadow-[0_0_30px_rgba(0,0,0,0.5)] hover:bg-emerald-500/10 hover:border-emerald-500/50 hover:scale-105 transition-all duration-300 group"
-        >
-          <div className="p-2 bg-emerald-500/20 rounded-full group-hover:bg-emerald-500/30 transition-colors">
-            <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-          </div>
-          <span className="text-sm font-bold text-emerald-400 tracking-wide uppercase">
-            {deferredPrompt ? 'Instalar App' : 'Instalar'}
-          </span>
-        </button>
-      )}
+      {/* Botão Flutuante (Removido para versão Electron) */}
     </div>
     </div>
   );
