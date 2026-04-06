@@ -7,12 +7,12 @@
   "theme_color": "#0B1120",
   "icons": [
     {
-      "src": "/roncore-logo-v5.png",
+      "src": "/roncore-logo-v6.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/roncore-logo-v5.png",
+      "src": "/roncore-logo-v6.png",
       "sizes": "512x512",
       "type": "image/png"
     }

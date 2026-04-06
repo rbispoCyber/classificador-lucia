@@ -513,7 +513,7 @@ function App() {
               <div className="absolute inset-0 translate-x-[-150%] skew-x-[-20deg] bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-shine z-20 pointer-events-none"></div>
 
               <img 
-                src="roncore-logo-v5.png" 
+                src="roncore-logo-v6.png" 
                 alt="Logo RonCore Analytics" 
                 className="w-32 h-32 md:w-40 md:h-40 object-cover rounded-[2rem] relative z-10 shadow-[0_0_30px_rgba(59,130,246,0.3)] border-2 border-white/10 transform transition-transform duration-700 hover:scale-[1.03]" 
               />
@@ -525,7 +525,7 @@ function App() {
           </h1>
 
           <p className="text-lg md:text-xl text-slate-300 font-light mb-16 max-w-2xl leading-relaxed opacity-90">
-            Automação avançada para caracterização de reservatórios carbonáticos. 
+            Automação avançada para caracterização de reservatórios carbonáticos v2. 
             Análise de perfis, classificação de Lucia e identificação de Unidades de Fluxo em segundos.
           </p>
 
