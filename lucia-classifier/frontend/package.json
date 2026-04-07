@@ -20,7 +20,8 @@
       "output": "instalador"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "public/roncore-logo-v7.png"
     }
   },
   "dependencies": {
