@@ -16,6 +16,7 @@
   "build": {
     "appId": "com.ronaldo.roflow",
     "productName": "RoFlow Petrofisica",
+    "electronVersion": "41.0.4",
     "directories": {
       "output": "instalador"
     },
@@ -42,7 +43,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
     "autoprefixer": "^10.4.27",
-    "electron": "^41.0.4",
+    "electron": "41.0.4",
     "electron-builder": "^26.8.1",
     "electron-packager": "^17.1.2",
     "eslint": "^9.39.1",

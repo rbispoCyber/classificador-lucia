@@ -503,19 +503,23 @@ function App() {
           
           {/* LOGO ANIMADA COM ANÉIS DE NEON E EFEITOS GLASS */}
           <div className="relative mb-10 group perspective-1000">
-            {/* Brilho pulsante externo */}
-            <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 via-emerald-400 to-indigo-500 rounded-[2.2rem] blur-xl opacity-40 group-hover:opacity-80 transition-all duration-700 animate-[spin_8s_linear_infinite]"></div>
+            {/* 1. Aura de Fundo (Breathing Glow) */}
+            <div className="absolute -inset-10 bg-blue-500/10 rounded-full blur-[80px] animate-pulse-glow pointer-events-none"></div>
             
-            {/* Cápsula de borda fina */}
-            <div className="relative bg-[#0B1120]/80 backdrop-blur-xl p-1.5 rounded-[2rem] shadow-2xl border border-white/10 group-hover:border-blue-400/50 transition-colors duration-500 overflow-hidden transform group-hover:scale-105">
+            {/* 2. Anéis de Energia (Dual Orbit) */}
+            <div className="absolute -inset-4 bg-gradient-to-tr from-blue-600/40 via-cyan-400/20 to-emerald-500/40 rounded-[2.5rem] blur-xl opacity-40 group-hover:opacity-90 transition-all duration-700 animate-[spin_12s_linear_infinite]"></div>
+            <div className="absolute -inset-2 bg-gradient-to-bl from-indigo-500/30 via-sky-400/20 to-teal-400/30 rounded-[2.2rem] blur-lg opacity-30 group-hover:opacity-80 transition-all duration-1000 animate-[spin_8s_linear_infinite_reverse]"></div>
+            
+            {/* 3. Cápsula de borda fina (Glassmorphism avançado) */}
+            <div className="relative bg-[#0B1120]/60 backdrop-blur-2xl p-1 rounded-[2.1rem] shadow-2xl border border-white/10 group-hover:border-blue-400/40 transition-all duration-500 overflow-hidden transform group-hover:scale-[1.05] group-hover:shadow-[0_0_50px_rgba(59,130,246,0.4)]">
               
-              {/* Efeito de Reflexo (luz varrendo) na logo */}
-              <div className="absolute inset-0 translate-x-[-150%] skew-x-[-20deg] bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-shine z-20 pointer-events-none"></div>
+              {/* Efeito de Reflexo (luz varrendo) */}
+              <div className="absolute inset-0 translate-x-[-150%] skew-x-[-20deg] bg-gradient-to-r from-transparent via-white/30 to-transparent group-hover:animate-shine z-20 pointer-events-none"></div>
 
               <img 
-                src="roncore-logo-v7.png" 
+                src="roncore-logo-v8.png" 
                 alt="Logo RonCore Analytics" 
-                className="w-32 h-32 md:w-40 md:h-40 object-cover rounded-[2rem] relative z-10 shadow-[0_0_30px_rgba(59,130,246,0.3)] border-2 border-white/10 transform transition-transform duration-700 hover:scale-[1.03]" 
+                className="w-32 h-32 md:w-44 md:h-44 object-cover rounded-[2rem] relative z-10 border border-white/5 transform transition-transform duration-1000 group-hover:rotate-[2deg]" 
               />
             </div>
           </div>

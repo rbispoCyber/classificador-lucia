@@ -27,7 +27,11 @@ Thumbs.db
 release/
 dist/
 RoFlow-*/
+instalador/
+win-unpacked/
 *.pak
 *.bin
 *.exe
 *.log
+*.zip
+*.7z
