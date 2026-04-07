@@ -1,5 +1,6 @@
 {
   "name": "RonCore Analytics",
+  "version": "1.0.1",
   "short_name": "RonCore",
   "start_url": ".",
   "display": "standalone",

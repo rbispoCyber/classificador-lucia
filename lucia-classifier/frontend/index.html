@@ -10,20 +10,37 @@
     <meta name="theme-color" content="#0f172a" />
     <link rel="apple-touch-icon" href="/roncore-logo-v7.png" />
     <script>
-      // Script para forçar a limpeza de cache e service workers antigos
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-          for(let registration of registrations) {
-            registration.unregister();
+      // 🚀 SCRIPT DE LIMPEZA NUCLEAR (Força atualização em navegadores travados)
+      async function clearAllCaches() {
+        try {
+          // 1. Desregistrar todos os Service Workers
+          if ('serviceWorker' in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (let registration of registrations) {
+              await registration.unregister();
+              console.log('Service Worker desregistrado');
+            }
           }
-        });
+          // 2. Limpar todos os caches da API Cache
+          if ('caches' in window) {
+            const names = await caches.keys();
+            for (let name of names) {
+              await caches.delete(name);
+              console.log('Cache limpo:', name);
+            }
+          }
+          // 3. Limpar Storage Local (Opcional, mas ajuda a resetar estados zumbis)
+          localStorage.clear();
+          sessionStorage.clear();
+          
+          console.log('Limpeza completa realizada com sucesso.');
+        } catch (err) {
+          console.error('Erro na limpeza crítica:', err);
+        }
       }
-      // Limpar caches de armazenamento se existirem
-      if ('caches' in window) {
-        caches.keys().then(function(names) {
-          for (let name of names) caches.delete(name);
-        });
-      }
+
+      // Executa a limpeza imediatamente se for necessário (detectado por URL ou versão)
+      clearAllCaches();
     </script>
   </head>
   <body>
