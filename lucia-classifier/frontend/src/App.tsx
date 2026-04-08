@@ -2,6 +2,7 @@ import React, { useState, useRef, type DragEvent } from 'react';
 import * as XLSX from 'xlsx';
 import Plot from 'react-plotly.js'; // Importando o Plotly para o gráfico único
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ScatterChart, Scatter, ZAxis, CartesianGrid } from 'recharts';
+import RockCore3D from './components/RockCore3D';
 
 // Quando colocarmos o backend no Render, colaremos o link oficial aqui!
 // Por enquanto, deixe o localhost para continuar funcionando no seu computador.
@@ -26,6 +27,7 @@ function App() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const [chartTheme, setChartTheme] = useState<'dark' | 'light'>('light');
+  const [hoveredClass, setHoveredClass] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -307,8 +309,13 @@ function App() {
     return rawData.filter(d => !isNaN(d.parametro) && d.parametro > 0 && d.poro > 0 && d.perm > 0 && d.classe !== 'N.C');
   };
 
-  const distribuicaoData = chartData.length > 0 ? obterDadosDistribuicao() : [];
+  const contribuicoesRef = chartData.length > 0 ? obterDadosDistribuicao() : [];
+  const distribuicaoData = contribuicoesRef;
   const dispersaoData = chartData.length > 0 ? obterDadosDispersaoSecundaria() : [];
+  
+  const dominantClass = distribuicaoData.length > 0 
+    ? [...distribuicaoData].sort((a, b) => b.quantidade - a.quantidade)[0].nome 
+    : 'N.C';
 
   // Criação dos objetos de legenda customizados para alinhamento de cores
   const legendPayloadLucia = ['Classe 1', 'Classe 2', 'Classe 3'].map(c => ({ id: c, value: c, type: 'circle' as const, color: getCorClasse(c) }));
@@ -336,7 +343,7 @@ function App() {
         mode: 'markers',
         type: 'scatter',
         name: classe,
-        marker: { color: coresClasses[classe], size: 7 },
+        marker: { color: coresClasses[classe], size: 7, opacity: hoveredClass ? (classe === hoveredClass ? 1.0 : 0.15) : 0.8 },
         hovertemplate: `<b>${classe}</b><br>Φ: %{x:.4f}<br>K: %{y:.2e} mD<br>%{text}<extra></extra>`
       };
     }).filter(trace => trace.x.length > 0);
@@ -380,7 +387,7 @@ function App() {
         mode: 'markers',
         type: 'scatter',
         name: classe, // Isso fará a legenda dos pontos aparecer certinha
-        marker: { color: coresGhe[classe] || cores_paleta[index], size: 7, line: { color: 'white', width: 0.5 } }, // Borda branca fina para destaque
+        marker: { color: coresGhe[classe] || cores_paleta[index], size: 7, opacity: hoveredClass ? (classe === hoveredClass ? 1.0 : 0.15) : 0.8, line: { color: 'white', width: 0.5 } }, // Borda branca fina para destaque
         hovertemplate: `<b>${classe}</b><br>Φ: %{x:.2f}<br>K: %{y:.2e} mD<br>%{text}<extra></extra>`
       };
     }).filter(trace => trace.x.length > 0);
@@ -837,7 +844,8 @@ function App() {
                 </div>
               </div>
             </div>
-            <div className="w-full">
+            <div className="w-full grid grid-cols-1 xl:grid-cols-3 gap-6 relative">
+              <div className="col-span-1 xl:col-span-2 flex flex-col gap-6">
 
               {/* CHAVEADOR DE ABAS */}
               {abaAtiva === 'lucia' ? (
@@ -951,10 +959,33 @@ function App() {
                 </div>
 
               )}
+              </div>
+
+              {/* === ROCK CORE 3D TILE === */}
+              {chartData.length > 0 && (
+                <div className={`col-span-1 rounded-2xl p-4 h-[500px] xl:h-auto min-h-[400px] transition-all duration-500 shadow-sm flex flex-col relative z-20 ${chartTheme === 'dark' ? 'bg-[#0a0f1c] border border-slate-700/50' : 'bg-white border border-slate-300'}`}>
+                  <h3 className={`text-center text-sm font-bold mb-2 ${chartTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
+                    Testemunho de Rocha (Simulação 3D)
+                  </h3>
+                  <div className="flex-1 w-full relative group">
+                     {/* Bedge com a Classe Predominante */}
+                     <p className="absolute top-2 right-2 z-10 text-[10px] px-2 py-1 rounded font-bold uppercase shadow-lg backdrop-blur-sm" 
+                        style={{ color: getCorClasse(dominantClass), backgroundColor: `${getCorClasse(dominantClass)}20`, border: `1px solid ${getCorClasse(dominantClass)}40` }}>
+                       Predominante: {dominantClass}
+                     </p>
+                     <div className="absolute inset-0 cursor-grab active:cursor-grabbing">
+                        <RockCore3D dominantClass={dominantClass} theme={chartTheme} />
+                     </div>
+                     <p className="absolute bottom-2 left-0 right-0 text-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity" style={{color: chartTheme === 'dark' ? '#94a3b8' : '#64748b'}}>
+                       Arraste para girar a rocha
+                     </p>
+                  </div>
+                </div>
+              )}
 
               {/* === NOVOS GRÁFICOS RECHARTS NEON === */}
               {chartData.length > 0 && eixoX !== 'nenhum' && eixoY !== 'nenhum' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 animate-slide-up-delayed">
+                <div className="col-span-1 xl:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6 mt-2 animate-slide-up-delayed">
                   {/* Gráfico de Distribuição (BarChart) */}
                   <div className={`w-full rounded-2xl p-4 h-[350px] transition-all duration-500 shadow-sm flex flex-col items-center z-10 ${chartTheme === 'dark' ? 'bg-[#0a0f1c] relative border border-transparent [background-clip:padding-box] before:absolute before:inset-0 before:-z-10 before:rounded-2xl before:m-[-1px] before:bg-gradient-to-br before:from-purple-500/40 before:to-blue-500/40' : 'bg-white border border-slate-300'}`}>
                     <h3 className={`text-center text-sm font-bold mb-4 ${chartTheme === 'dark' ? 'text-slate-300' : 'text-slate-700'}`}>
@@ -972,19 +1003,41 @@ function App() {
                           labelStyle={{ color: chartTheme === 'dark' ? '#ffffff' : '#111827' }}
                         />
                         <Bar dataKey="quantidade" radius={[4, 4, 0, 0]}>
-                          {distribuicaoData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.fill} style={{ filter: chartTheme === 'dark' ? `drop-shadow(0 0 8px ${entry.fill})` : 'none' }} />
-                          ))}
+                          {distribuicaoData.map((entry, index) => {
+                            const isFaded = hoveredClass && hoveredClass !== entry.nome;
+                            return (
+                              <Cell 
+                                key={`cell-${index}`} 
+                                fill={entry.fill} 
+                                style={{ 
+                                  filter: chartTheme === 'dark' && !isFaded ? `drop-shadow(0 0 8px ${entry.fill})` : 'none',
+                                  opacity: isFaded ? 0.2 : 1.0,
+                                  transition: 'opacity 0.3s ease'
+                                }} 
+                                onMouseEnter={() => setHoveredClass(entry.nome)}
+                                onMouseLeave={() => setHoveredClass(null)}
+                              />
+                            );
+                          })}
                         </Bar>
                       </BarChart>
                     </ResponsiveContainer>
                     <div className="flex flex-wrap justify-center gap-4 mt-2 mb-2 w-full">
-                      {currentLegendPayload.map((item, i) => (
-                        <div key={i} className="flex items-center text-xs font-semibold" style={{ color: chartTheme === 'dark' ? '#ffffff' : '#475569' }}>
-                          <span className="w-3 h-3 rounded-full mr-2 inline-block" style={{ backgroundColor: item.color, boxShadow: chartTheme === 'dark' ? `0 0 6px ${item.color}` : 'none' }}></span>
-                          {item.value}
-                        </div>
-                      ))}
+                      {currentLegendPayload.map((item, i) => {
+                        const isFaded = hoveredClass && hoveredClass !== item.value;
+                        return (
+                          <div 
+                            key={i} 
+                            className="flex items-center text-xs font-semibold cursor-pointer transition-opacity duration-300" 
+                            style={{ color: chartTheme === 'dark' ? '#ffffff' : '#475569', opacity: isFaded ? 0.3 : 1.0 }}
+                            onMouseEnter={() => setHoveredClass(item.value)}
+                            onMouseLeave={() => setHoveredClass(null)}
+                          >
+                            <span className="w-3 h-3 rounded-full mr-2 inline-block transition-all" style={{ backgroundColor: item.color, boxShadow: chartTheme === 'dark' && !isFaded ? `0 0 6px ${item.color}` : 'none' }}></span>
+                            {item.value}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -1006,19 +1059,39 @@ function App() {
                           labelStyle={{ color: chartTheme === 'dark' ? '#ffffff' : '#111827' }}
                         />
                         <Scatter data={dispersaoData} shape="circle">
-                          {dispersaoData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.fill} style={{ filter: chartTheme === 'dark' ? `drop-shadow(0 0 6px ${entry.fill})` : 'none' }} />
-                          ))}
+                          {dispersaoData.map((entry, index) => {
+                            const isFaded = hoveredClass && hoveredClass !== entry.classe;
+                            return (
+                              <Cell 
+                                key={`cell-${index}`} 
+                                fill={entry.fill} 
+                                style={{ 
+                                  filter: chartTheme === 'dark' && !isFaded ? `drop-shadow(0 0 6px ${entry.fill})` : 'none',
+                                  opacity: isFaded ? 0.2 : 1.0,
+                                  transition: 'opacity 0.3s ease'
+                                }} 
+                              />
+                            );
+                          })}
                         </Scatter>
                       </ScatterChart>
                     </ResponsiveContainer>
                     <div className="flex flex-wrap justify-center gap-4 mt-2 mb-2 w-full">
-                      {currentLegendPayload.map((item, i) => (
-                        <div key={i} className="flex items-center text-xs font-semibold" style={{ color: chartTheme === 'dark' ? '#cbd5e1' : '#475569' }}>
-                          <span className="w-3 h-3 rounded-full mr-2 inline-block" style={{ backgroundColor: item.color, boxShadow: chartTheme === 'dark' ? `0 0 6px ${item.color}` : 'none' }}></span>
-                          {item.value}
-                        </div>
-                      ))}
+                      {currentLegendPayload.map((item, i) => {
+                        const isFaded = hoveredClass && hoveredClass !== item.value;
+                        return (
+                          <div 
+                            key={i} 
+                            className="flex items-center text-xs font-semibold cursor-pointer transition-opacity duration-300" 
+                            style={{ color: chartTheme === 'dark' ? '#cbd5e1' : '#475569', opacity: isFaded ? 0.3 : 1.0 }}
+                            onMouseEnter={() => setHoveredClass(item.value)}
+                            onMouseLeave={() => setHoveredClass(null)}
+                          >
+                            <span className="w-3 h-3 rounded-full mr-2 inline-block transition-all" style={{ backgroundColor: item.color, boxShadow: chartTheme === 'dark' && !isFaded ? `0 0 6px ${item.color}` : 'none' }}></span>
+                            {item.value}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -1026,7 +1099,7 @@ function App() {
 
               {/* === NOVA DATA TABLE DE AMOSTRAS === */}
               {chartData.length > 0 && (
-                <div className="mt-8 animate-slide-up bg-[#0f172a]/80 backdrop-blur-md rounded-2xl border border-slate-700 overflow-hidden shadow-lg z-10 relative">
+                <div className="col-span-1 xl:col-span-3 mt-8 animate-slide-up bg-[#0f172a]/80 backdrop-blur-md rounded-2xl border border-slate-700 overflow-hidden shadow-lg z-10 relative">
                   <div className="px-6 py-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center relative">
                     <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"></div>
                     <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider">Amostra de Resultados (Top 15)</h3>
@@ -1073,7 +1146,6 @@ function App() {
                   </div>
                 </div>
               )}
-
             </div>
 
             <div className="flex flex-col gap-4 mt-8 w-full">
