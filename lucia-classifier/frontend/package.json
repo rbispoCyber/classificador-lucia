@@ -22,7 +22,7 @@
     },
     "win": {
       "target": "nsis",
-      "icon": "public/roncore-logo-v7.png"
+      "icon": "public/roncore-logo-v8.png"
     }
   },
   "dependencies": {

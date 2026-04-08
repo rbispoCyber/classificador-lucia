@@ -7,7 +7,7 @@ function createWindow () {
     width: 1280,
     height: 800,
     title: "RoFlow - Suíte Petrofísica",
-    icon: path.join(__dirname, 'public/roncore-logo-v7.png'), // Ativando o ícone v7 para o offline!
+    icon: path.join(__dirname, 'public/roncore-logo-v8.png'), // Ativando o ícone v8 para o offline!
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false // Necessário se quiser usar nodeIntegration: true puro
