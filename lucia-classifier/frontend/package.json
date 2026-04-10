@@ -14,15 +14,13 @@
     "gerar-exe": "npm run build && electron-builder"
   },
   "build": {
-    "appId": "com.ronaldo.roflow",
-    "productName": "RoFlow Petrofisica",
-    "electronVersion": "41.0.4",
+    "appId": "com.ronaldo.porokanalytics",
+    "productName": "PoroK Analytics",
     "directories": {
       "output": "instalador"
     },
     "win": {
-      "target": "nsis",
-      "icon": "public/roncore-logo-v8.png"
+      "target": "nsis"
     }
   },
   "dependencies": {

@@ -6,7 +6,7 @@ function createWindow () {
   const win = new BrowserWindow({
     width: 1280,
     height: 800,
-    title: "RoFlow - Suíte Petrofísica",
+    title: "PoroK Analytics",
     icon: path.join(__dirname, 'public/roncore-logo-v8.png'), // Ativando o ícone v8 para o offline!
     webPreferences: {
       nodeIntegration: true,
