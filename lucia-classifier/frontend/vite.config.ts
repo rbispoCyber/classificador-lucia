@@ -7,6 +7,6 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
-  // Essa linha abaixo é A MÁGICA para o modo offline funcionar no Windows:
-  base: './', 
+  // base: './' foi removido — causa problemas no Vercel (paths relativos quebram o servidor web)
+  // O padrão '/' é correto para deploy em produção
 })
