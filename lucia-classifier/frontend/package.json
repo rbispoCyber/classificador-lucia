@@ -16,11 +16,17 @@
   "build": {
     "appId": "com.ronaldo.porokanalytics",
     "productName": "PoroK Analytics",
+    "forceCodeSigning": false,
     "directories": {
       "output": "instalador"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
     }
   },
   "dependencies": {
