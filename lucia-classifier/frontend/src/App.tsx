@@ -292,20 +292,6 @@ function App() {
         };
       });
 
-      // === SALVAR NO HISTÓRICO (últimas 5 análises) ===
-      const novaAnalise: ArquivoSalvo = {
-        id: crypto.randomUUID(),
-        nomeArquivo: file.name,
-        dataHora: new Date().toLocaleString('pt-BR'),
-        dados: dadosProcessados,
-      };
-      setHistorico(prev => {
-        const novaLista = [novaAnalise, ...prev];
-        const ultimos5 = novaLista.slice(0, 5);
-        localStorage.setItem('@PoroK_Historico', JSON.stringify(ultimos5));
-        return ultimos5;
-      });
-
       // 3. Exporta diretamente pelo navegador
       const novaWS = XLSX.utils.json_to_sheet(dadosProcessados);
       const novoWB = XLSX.utils.book_new();
@@ -1240,27 +1226,53 @@ function App() {
               {historico.map((item) => (
                 <div
                   key={item.id}
-                  className="bg-slate-900 border border-slate-600 p-4 rounded-xl hover:border-emerald-500 hover:shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all cursor-pointer group"
-                  onClick={() => {
-                    setChartData(item.dados);
-                    setStep(3);
-                    if (item.dados.length > 0) {
-                      setEixoX('Porosidade');
-                      setEixoY('Permeabilidade');
-                    }
-                  }}
+                  className="bg-slate-900 border border-slate-600 p-4 rounded-xl hover:border-emerald-500 hover:shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all group flex flex-col gap-3"
                 >
-                  <div className="text-emerald-400 font-semibold truncate group-hover:text-emerald-300">
-                    {item.nomeArquivo}
+                  {/* Informações do arquivo */}
+                  <div>
+                    <div className="text-emerald-400 font-semibold truncate group-hover:text-emerald-300">
+                      {item.nomeArquivo}
+                    </div>
+                    <div className="text-slate-400 text-sm mt-1">
+                      {item.dataHora}
+                    </div>
+                    <div className="text-slate-500 text-xs mt-1">
+                      {item.dados.length} Amostras
+                    </div>
                   </div>
-                  <div className="text-slate-400 text-sm mt-1">
-                    {item.dataHora}
-                  </div>
-                  <div className="text-slate-500 text-xs mt-2 flex justify-between">
-                    <span>{item.dados.length} Amostras</span>
-                    <span className="text-blue-400 flex items-center gap-1">
-                      Visualizar <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
-                    </span>
+
+                  {/* Botões de ação */}
+                  <div className="flex gap-2 mt-auto">
+                    {/* Visualizar nos gráficos */}
+                    <button
+                      className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-blue-300 hover:text-blue-200 text-xs font-semibold transition-all"
+                      onClick={() => {
+                        setChartData(item.dados);
+                        setStep(3);
+                        if (item.dados.length > 0) {
+                          setEixoX('Porosidade');
+                          setEixoY('Permeabilidade');
+                        }
+                      }}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                      Visualizar
+                    </button>
+
+                    {/* Baixar Excel */}
+                    <button
+                      className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg bg-emerald-900/50 hover:bg-emerald-800/70 text-emerald-400 hover:text-emerald-300 text-xs font-semibold border border-emerald-700/50 hover:border-emerald-500 transition-all"
+                      onClick={() => {
+                        const ws = XLSX.utils.json_to_sheet(item.dados);
+                        const wb = XLSX.utils.book_new();
+                        XLSX.utils.book_append_sheet(wb, ws, 'Analise_Completa');
+                        const nomeBase = item.nomeArquivo.replace(/\.[^/.]+$/, '');
+                        XLSX.writeFile(wb, `${nomeBase}_RonCore.xlsx`);
+                      }}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                      Baixar Excel
+                    </button>
                   </div>
                 </div>
               ))}
