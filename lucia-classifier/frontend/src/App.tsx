@@ -1,4 +1,12 @@
-import React, { useState, useRef, type DragEvent } from 'react';
+import React, { useState, useRef, useEffect, type DragEvent } from 'react';
+
+// Molde da memória de histórico
+interface ArquivoSalvo {
+  id: string;
+  nomeArquivo: string;
+  dataHora: string;
+  dados: any[];
+}
 import * as XLSX from 'xlsx';
 import Plot from 'react-plotly.js'; // Importando o Plotly para o gráfico único
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ScatterChart, Scatter, ZAxis, CartesianGrid } from 'recharts';
@@ -9,6 +17,16 @@ import RockCore3D from './components/RockCore3D';
 export const API_URL = "http://localhost:8000";
 
 function App() {
+  // Estado do histórico (últimas 5 análises)
+  const [historico, setHistorico] = useState<ArquivoSalvo[]>([]);
+
+  // Ao abrir o app, recupera o histórico salvo no HD
+  useEffect(() => {
+    const historicoSalvo = localStorage.getItem('@PoroK_Historico');
+    if (historicoSalvo) {
+      setHistorico(JSON.parse(historicoSalvo));
+    }
+  }, []);
   const [file, setFile] = useState<File | null>(null);
   const [columns, setColumns] = useState<string[]>([]);
   const [poroCol, setPoroCol] = useState<string>('nenhum');
@@ -256,6 +274,20 @@ function App() {
           "FZI_GHE": fzi > 0 ? fzi.toFixed(4) : "N.C",
           "Classe_GHE": classeGhe
         };
+      });
+
+      // === SALVAR NO HISTÓRICO (últimas 5 análises) ===
+      const novaAnalise: ArquivoSalvo = {
+        id: crypto.randomUUID(),
+        nomeArquivo: file.name,
+        dataHora: new Date().toLocaleString('pt-BR'),
+        dados: dadosProcessados,
+      };
+      setHistorico(prev => {
+        const novaLista = [novaAnalise, ...prev];
+        const ultimos5 = novaLista.slice(0, 5);
+        localStorage.setItem('@PoroK_Historico', JSON.stringify(ultimos5));
+        return ultimos5;
       });
 
       // 3. Exporta diretamente pelo navegador
@@ -1178,6 +1210,49 @@ function App() {
         )}
       </div>
       {/* Botão Flutuante (Removido para versão Electron) */}
+
+      {/* ========================================== */}
+      {/* 3. HISTÓRICO DE ANÁLISES RECENTES          */}
+      {/* ========================================== */}
+      {historico.length > 0 && (
+        <div className="mt-12 bg-slate-800/50 backdrop-blur-md border border-slate-700 p-6 rounded-2xl w-full max-w-4xl mx-auto shadow-xl mb-16 animate-fade-in">
+          <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Análises Recentes
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {historico.map((item) => (
+              <div
+                key={item.id}
+                className="bg-slate-900 border border-slate-600 p-4 rounded-xl hover:border-emerald-500 hover:shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all cursor-pointer group"
+                onClick={() => {
+                  setChartData(item.dados);
+                  setStep(3);
+                  // Tenta inferir colunas do primeiro item
+                  if (item.dados.length > 0) {
+                    setEixoX('Porosidade');
+                    setEixoY('Permeabilidade');
+                  }
+                }}
+              >
+                <div className="text-emerald-400 font-semibold truncate group-hover:text-emerald-300">
+                  {item.nomeArquivo}
+                </div>
+                <div className="text-slate-400 text-sm mt-1">
+                  {item.dataHora}
+                </div>
+                <div className="text-slate-500 text-xs mt-2 flex justify-between">
+                  <span>{item.dados.length} Amostras</span>
+                  <span className="text-blue-400 flex items-center gap-1">
+                    Visualizar <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
     </div>
   );
