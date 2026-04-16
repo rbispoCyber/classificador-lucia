@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, AccumulativeShadows, RandomizedLight } from '@react-three/drei';
+import { OrbitControls, Grid, Html, Float } from '@react-three/drei';
 import * as THREE from 'three';
 
 interface RockCore3DProps {
@@ -36,64 +36,159 @@ const getRockMaterialProps = (dominantClass: string) => {
   }
 
   // Default / Deficient
-  return { color: '#64748b', emissive: '#334155', emissiveIntensity: 0.05, roughness: 1.0, metalness: 0.0 };
+  return { color: '#64748b', emissive: '#334155', emissiveIntensity: 0.1, roughness: 1.0, metalness: 0.0 };
 };
 
-const CoreCylinder = ({ dominantClass }: { dominantClass: string }) => {
-  const meshRef = useRef<THREE.Mesh>(null);
+const DigitalTwinCore = ({ dominantClass }: { dominantClass: string }) => {
+  const groupRef = useRef<THREE.Group>(null);
+  const scannerRef = useRef<THREE.Mesh>(null);
+  const scannerLightRef = useRef<THREE.PointLight>(null);
   const matProps = getRockMaterialProps(dominantClass);
 
-  // Slow rotation
-  useFrame(() => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y += 0.005;
-      meshRef.current.rotation.x = 0.2; // slight tilt
+  // Animação Frame-a-Frame do gêmeo digital
+  useFrame((state) => {
+    const elapsedTime = state.clock.getElapsedTime();
+    if (groupRef.current) {
+      // Rotação suave do conjunto completo
+      groupRef.current.rotation.y = elapsedTime * 0.2;
+    }
+    if (scannerRef.current && scannerLightRef.current) {
+      // O scanner sobe e desce usando uma onda seno (de -1.5 a 1.5 na altura do cilindro que é 3.5)
+      const scanHeight = Math.sin(elapsedTime * 1.5) * 1.8;
+      scannerRef.current.position.y = scanHeight;
+      scannerLightRef.current.position.y = scanHeight;
     }
   });
 
   return (
-    <mesh ref={meshRef} castShadow receiveShadow>
-      {/* Testemunho Cilíndrico Padrão: Topo, Base, Altura, Segmentos Radiais, Segs Altura */ }
-      <cylinderGeometry args={[1, 1, 3.5, 64, 4, false]} />
-      {/* Material simulando a rocha. As rugosidades mudam de acordo com as classes */}
-      <meshStandardMaterial 
-        color={matProps.color} 
-        emissive={matProps.emissive}
-        emissiveIntensity={matProps.emissiveIntensity}
-        roughness={matProps.roughness}
-        metalness={matProps.metalness}
-        wireframe={false}
-      />
-    </mesh>
+    <group ref={groupRef}>
+      <Float speed={1.5} rotationIntensity={0.1} floatIntensity={0.5} floatingRange={[-0.1, 0.1]}>
+        
+        {/* NÚCLEO SÓLIDO (O Testemunho Físico) */}
+        <mesh castShadow receiveShadow>
+          <cylinderGeometry args={[1, 1, 3.5, 64, 4, false]} />
+          <meshStandardMaterial 
+            color={matProps.color} 
+            emissive={matProps.emissive}
+            emissiveIntensity={matProps.emissiveIntensity * 0.5} // Menos emissive no sólido
+            roughness={matProps.roughness}
+            metalness={matProps.metalness}
+            wireframe={false}
+          />
+        </mesh>
+
+        {/* MALHA HOLOGRÁFICA (O Gêmeo Digital Wireframe) */}
+        <mesh>
+          <cylinderGeometry args={[1.05, 1.05, 3.6, 32, 16, true]} />
+          <meshStandardMaterial 
+            color={matProps.emissive} 
+            emissive={matProps.emissive}
+            emissiveIntensity={1.5}
+            transparent={true}
+            opacity={0.3}
+            wireframe={true}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+
+        {/* SCANNER A LASER */}
+        <mesh ref={scannerRef} rotation-x={Math.PI / 2}>
+          <torusGeometry args={[1.2, 0.05, 16, 64]} />
+          <meshBasicMaterial color="#ffffff" transparent opacity={0.8} />
+          {/* Luz do Laser acoplada ao Anel */}
+          <pointLight ref={scannerLightRef} color={matProps.emissive} intensity={3} distance={5} />
+        </mesh>
+
+        {/* HUD HOLOGRÁFICO DA CLASSE (Html Drei) */}
+        <Html position={[1.5, 1.0, 0]} center transform sprite zIndexRange={[100, 0]}>
+          <div className="bg-[#0B1120]/80 backdrop-blur-md border border-slate-700/50 p-3 rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.5)] whitespace-nowrap select-none w-48 pointer-events-none">
+            <div className="text-[10px] uppercase text-cyan-400 font-bold tracking-[0.2em] mb-1 flex items-center gap-1">
+              <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div>
+              Sistema RonCore
+            </div>
+            <div className="text-white text-xl font-black mb-1 drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">
+              {dominantClass}
+            </div>
+            <div className="w-full bg-slate-700/50 h-0.5 mb-2 overflow-hidden">
+              <div className="h-full bg-cyan-400 w-[78%]"></div>
+            </div>
+            <div className="flex justify-between text-[10px] text-slate-400 uppercase font-mono">
+              <span>SCAN</span>
+              <span className="text-emerald-400">ATIVO</span>
+            </div>
+          </div>
+        </Html>
+        
+        {/* HUD ESTATÍSTICO INFERIOR */}
+        <Html position={[-1.7, -1.0, 0]} center transform sprite zIndexRange={[100, 0]}>
+           <div className="bg-[#0B1120]/80 backdrop-blur-md border border-slate-700/50 p-2 rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.5)] text-center w-32 select-none pointer-events-none border-l-2 border-l-blue-500">
+             <div className="text-[9px] uppercase tracking-widest text-slate-400 font-mono">ESTRUTURA</div>
+             <div className="text-sm font-bold text-slate-200">INTEGRIDADE HIGH</div>
+           </div>
+        </Html>
+      </Float>
+    </group>
   );
 };
 
 export const RockCore3D: React.FC<RockCore3DProps> = ({ dominantClass, theme }) => {
+  // Configuro um fundo transparente para herdar o background bonito da home
   return (
-    <Canvas shadows camera={{ position: [0, 0, 6], fov: 45 }}>
+    <Canvas shadows camera={{ position: [-5, 3, 6], fov: 50 }} style={{ background: 'transparent' }}>
       <ambientLight intensity={theme === 'dark' ? 0.3 : 0.8} />
+      
+      {/* Luz principal vinda de cima */}
       <directionalLight 
-        position={[5, 5, 5]} 
+        position={[5, 10, 5]} 
         intensity={theme === 'dark' ? 1.5 : 1} 
         castShadow 
         shadow-mapSize={1024}
+        shadow-bias={-0.0001}
       />
       
-      {/* Luz misteriosa vinda de baixo */}
-      <pointLight position={[-5, -5, -5]} intensity={0.5} color="#3b82f6" />
+      {/* Refletor de ambiente secundário */}
+      <spotLight 
+        position={[-10, 5, -10]} 
+        intensity={1} 
+        color="#3b82f6" 
+        penumbra={1} 
+      />
       
-      <CoreCylinder dominantClass={dominantClass} />
+      {/* O Gêmeo Digital Dinâmico */}
+      <DigitalTwinCore dominantClass={dominantClass} />
       
-      {/* Sombra acumulada no piso */}
-      <AccumulativeShadows temporal frames={100} alphaTest={0.8} scale={10} position={[0, -2, 0]}>
-        <RandomizedLight amount={8} radius={4} ambient={0.5} intensity={1} position={[5, 5, -10]} bias={0.001} />
-      </AccumulativeShadows>
+      {/* GRADE DE SIMULAÇÃO (SCIFI FLOOR) */}
+      <Grid 
+        position={[0, -2.5, 0]} 
+        args={[20, 20]} 
+        cellSize={0.5} 
+        cellThickness={1} 
+        cellColor="#0284c7" // Azul 
+        sectionSize={2.5} 
+        sectionThickness={1.5} 
+        sectionColor="#38bdf8" 
+        fadeDistance={15} 
+        fadeStrength={1} 
+      />
+
+      {/* PEDESTAL CENTRAL */}
+      <mesh position={[0, -2.4, 0]} receiveShadow>
+        <cylinderGeometry args={[2, 2.5, 0.2, 32]} />
+        <meshStandardMaterial color="#0f172a" roughness={0.8} metalness={0.2} />
+      </mesh>
+      
+      {/* ARO DE LUZ NO PEDESTAL */}
+      <mesh position={[0, -2.28, 0]} receiveShadow>
+        <torusGeometry args={[2.0, 0.02, 16, 64]} />
+        <meshBasicMaterial color="#0ea5e9" />
+      </mesh>
 
       <OrbitControls 
         enablePan={false} 
         enableZoom={true} 
         minDistance={3}
-        maxDistance={10}
+        maxDistance={12}
+        maxPolarAngle={Math.PI / 2 - 0.05} // Impede olhar debaixo do chão
         autoRotate={false} 
       />
     </Canvas>

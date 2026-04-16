@@ -16,6 +16,17 @@ import RockCore3D from './components/RockCore3D';
 // Por enquanto, deixe o localhost para continuar funcionando no seu computador.
 export const API_URL = "http://localhost:8000";
 
+// Interface para o ElectronAPI (Preload)
+declare global {
+  interface Window {
+    electronAPI?: {
+      openFileDialog: () => Promise<{ name: string, data: any } | null>;
+      openFolderDialog: () => Promise<string | null>;
+      isElectron: boolean;
+    };
+  }
+}
+
 function App() {
   // Estado do histórico (últimas 5 análises)
   const [historico, setHistorico] = useState<ArquivoSalvo[]>([]);
@@ -47,8 +58,6 @@ function App() {
   const [chartTheme, setChartTheme] = useState<'dark' | 'light'>('light');
   const [hoveredClass, setHoveredClass] = useState<string | null>(null);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const coresClasses: Record<string, string> = {
     'Classe 1': '#22d3ee', // bg-cyan-400
     'Classe 2': '#34d399', // bg-emerald-400
@@ -67,8 +76,8 @@ function App() {
     return coresGhe[classe] || '#64748b';
   };
 
-  const handleDragOver = (e: DragEvent<HTMLDivElement>) => e.preventDefault();
-  const handleDrop = async (e: DragEvent<HTMLDivElement>) => {
+  const handleDragOver = (e: DragEvent<HTMLElement>) => e.preventDefault();
+  const handleDrop = async (e: DragEvent<HTMLElement>) => {
     e.preventDefault();
     if (e.dataTransfer.files && e.dataTransfer.files[0]) await processarUpload(e.dataTransfer.files[0]);
   };
@@ -76,27 +85,69 @@ function App() {
     if (e.target.files && e.target.files[0]) await processarUpload(e.target.files[0]);
   };
 
-  const processarUpload = async (selectedFile: File) => {
-    if (!selectedFile.name.endsWith('.xlsx') && !selectedFile.name.endsWith('.xls')) {
+  const handleNativeUpload = async () => {
+    if (window.electronAPI) {
+      const result = await window.electronAPI.openFileDialog();
+      if (result) {
+        if ('error' in result) {
+          alert(result.error);
+          return;
+        }
+        await processarUpload(result);
+      }
+    }
+  };
+
+  const processarUpload = async (selectedFile: File | { name: string, data: any, error?: string }) => {
+    if (!selectedFile.name || (!selectedFile.name.endsWith('.xlsx') && !selectedFile.name.endsWith('.xls'))) {
       alert("Envie apenas arquivos Excel (.xlsx ou .xls)");
       return;
     }
-    setFile(selectedFile);
+    
+    // Convertemos para um objeto File-like para o estado se for do Electron
+    if ('data' in selectedFile) {
+       // Mock de objeto File para manter compatibilidade com o estado existente
+       // Agora incluímos o método arrayBuffer para que as etapas seguintes consigam ler os dados
+       setFile({ 
+         name: selectedFile.name, 
+         arrayBuffer: async () => selectedFile.data 
+       } as any);
+    } else {
+       setFile(selectedFile);
+    }
     
     try {
       // LEITURA 100% OFFLINE DAS COLUNAS
-      const data = await selectedFile.arrayBuffer();
+      let data;
+      if ('data' in selectedFile) {
+        data = selectedFile.data;
+      } else {
+        data = await selectedFile.arrayBuffer();
+      }
+      
+      // No Electron (nodeIntegration: true/contextIsolation: false), o data vindo do IPC pode ser um Buffer.
+      // A biblioteca XLSX lê Buffers nativamente com o tipo 'buffer' ou detecta automaticamente sem o campo type.
       const workbook = XLSX.read(data, { type: 'array' });
+      
       const primeiraAba = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[primeiraAba];
-      const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+      
+      // header: 1 retorna um array de arrays (linhas)
+      const json = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
       
       if (json.length > 0) {
-        const headers = (json[0] as any[]).map(h => String(h).trim());
-        setColumns(headers);
-        setStep(2);
+        // Tenta encontrar a primeira linha que não seja totalmente vazia para servir de header
+        const headerRow = (json as any[]).find(row => Array.isArray(row) && row.some(cell => String(cell).trim() !== ""));
+        
+        if (headerRow) {
+          const headers = (headerRow as any[]).map(h => String(h || "").trim()).filter(h => h !== "");
+          setColumns(headers);
+          setStep(2);
+        } else {
+          alert("Não conseguimos identificar nenhuma coluna preenchida no arquivo.");
+        }
       } else {
-        alert("O arquivo parece estar vazio.");
+        alert("O arquivo parece estar vazio ou não contém abas válidas.");
       }
     } catch (error: any) {
       console.error("Erro na leitura offline:", error);
@@ -117,11 +168,15 @@ function App() {
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data, { type: 'array' });
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const df_raw = XLSX.utils.sheet_to_json(worksheet);
+      // Usamos uma leitura mais profunda caso as colunas tenham espaços ou nomes ligeiramente diferentes
+      const df_raw = XLSX.utils.sheet_to_json(worksheet, { defval: 0 });
       // Normalização: Trim nas chaves das colunas para evitar incompatibilidade com o estado columns
       const df = (df_raw as any[]).map(row => {
         const newRow: any = {};
-        Object.keys(row).forEach(k => newRow[k.trim()] = row[k]);
+        Object.keys(row).forEach(k => {
+          const cleanKey = k.trim();
+          newRow[cleanKey] = row[k];
+        });
         return newRow;
       });
 
@@ -652,13 +707,18 @@ function App() {
         {step === 1 && (
           <div className="flex flex-col gap-8 mt-2 animate-slide-up">
             {/* Upload Area */}
-            <div
+            <label
               onDragOver={handleDragOver}
               onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
+              onClick={(e) => {
+                if (window.electronAPI) {
+                  e.preventDefault();
+                  handleNativeUpload();
+                }
+              }}
               className="border-2 border-dashed border-blue-500/40 rounded-2xl p-12 flex flex-col items-center cursor-pointer bg-slate-800/40 backdrop-blur-md hover:bg-slate-800/60 hover:border-blue-400 hover:shadow-lg transition-all duration-300 group"
             >
-              <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept=".xlsx, .xls" className="hidden" />
+              <input type="file" onChange={handleFileSelect} accept=".xlsx, .xls" className="hidden" />
               <div className="relative mb-6 group-hover:scale-110 group-hover:-translate-y-2 transition-all duration-500">
                 <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-2xl scale-125 group-hover:bg-blue-400/40 transition-colors"></div>
                 <div className="relative z-10 flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 shadow-[0_8px_30px_rgb(0,0,0,0.5)] group-hover:border-blue-500/50 group-hover:shadow-[0_0_40px_rgba(59,130,246,0.3)] transition-all">
@@ -676,7 +736,21 @@ function App() {
               </div>
               <p className="text-xl font-medium text-slate-200 text-center">Arraste sua planilha Excel aqui</p>
               <p className="text-sm text-slate-400 mt-2 font-medium">ou clique para selecionar o arquivo</p>
-            </div>
+            </label>
+
+            {/* Opção para abrir pastas especificamente (apenas se estiver no Electron) */}
+            {window.electronAPI && (
+              <button 
+                onClick={async () => {
+                  const path = await window.electronAPI?.openFolderDialog();
+                  if (path) alert(`Pasta selecionada: ${path}. No momento, o app processa arquivos individualmente, mas agora você consegue navegar pelas suas pastas normalmente.`);
+                }}
+                className="mt-[-20px] mb-4 text-xs text-blue-400 hover:text-blue-300 flex items-center justify-center gap-1 opacity-60 hover:opacity-100 transition-all font-semibold"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+                Não está achando o arquivo? Clique aqui para navegar pelas pastas
+              </button>
+            )}
 
             {/* ========================================== */}
             {/* ÁREA DOS FUNDAMENTOS MATEMÁTICOS           */}
