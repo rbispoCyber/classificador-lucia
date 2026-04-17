@@ -101,18 +101,18 @@ const DigitalTwinCore = ({ dominantClass }: { dominantClass: string }) => {
 
         {/* HUD HOLOGRÁFICO DA CLASSE (Html Drei) */}
         <Html position={[1.5, 1.0, 0]} center transform sprite zIndexRange={[100, 0]}>
-          <div className="bg-[#0B1120]/80 backdrop-blur-md border border-slate-700/50 p-3 rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.5)] whitespace-nowrap select-none w-48 pointer-events-none">
-            <div className="text-[10px] uppercase text-cyan-400 font-bold tracking-[0.2em] mb-1 flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div>
+          <div className="bg-[#0B1120]/80 backdrop-blur-md border border-slate-700/50 p-1 rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.5)] whitespace-nowrap select-none w-20 pointer-events-none">
+            <div className="text-[6px] uppercase text-cyan-400 font-bold tracking-[0.2em] mb-0.5 flex items-center gap-1">
+              <div className="w-1 h-1 rounded-full bg-cyan-400 animate-pulse"></div>
               Sistema RonCore
             </div>
-            <div className="text-white text-xl font-black mb-1 drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">
+            <div className="text-white text-sm font-black mb-0.5 drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">
               {dominantClass}
             </div>
-            <div className="w-full bg-slate-700/50 h-0.5 mb-2 overflow-hidden">
+            <div className="w-full bg-slate-700/50 h-[1px] mb-1 overflow-hidden">
               <div className="h-full bg-cyan-400 w-[78%]"></div>
             </div>
-            <div className="flex justify-between text-[10px] text-slate-400 uppercase font-mono">
+            <div className="flex justify-between text-[6px] text-slate-400 uppercase font-mono">
               <span>SCAN</span>
               <span className="text-emerald-400">ATIVO</span>
             </div>
@@ -121,9 +121,9 @@ const DigitalTwinCore = ({ dominantClass }: { dominantClass: string }) => {
         
         {/* HUD ESTATÍSTICO INFERIOR */}
         <Html position={[-1.7, -1.0, 0]} center transform sprite zIndexRange={[100, 0]}>
-           <div className="bg-[#0B1120]/80 backdrop-blur-md border border-slate-700/50 p-2 rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.5)] text-center w-32 select-none pointer-events-none border-l-2 border-l-blue-500">
-             <div className="text-[9px] uppercase tracking-widest text-slate-400 font-mono">ESTRUTURA</div>
-             <div className="text-sm font-bold text-slate-200">INTEGRIDADE HIGH</div>
+           <div className="bg-[#0B1120]/80 backdrop-blur-md border border-slate-700/50 p-1 rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.5)] text-center w-20 select-none pointer-events-none border-l-2 border-l-blue-500">
+             <div className="text-[6px] uppercase tracking-widest text-slate-400 font-mono">ESTRUTURA</div>
+             <div className="text-[9px] font-bold text-slate-200">INTEGRIDADE HIGH</div>
            </div>
         </Html>
       </Float>

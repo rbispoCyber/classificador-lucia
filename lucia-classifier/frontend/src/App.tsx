@@ -50,6 +50,7 @@ function App() {
 
   // Adicione este novo estado junto com os outros
   const [abaAtiva, setAbaAtiva] = useState<'lucia' | 'ghe'>('lucia');
+  const [showApp, setShowApp] = useState(false);
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -510,153 +511,85 @@ function App() {
     return [...traces, ...curvas];
   };
 
-  // Animação de rolagem super suave em Javascript para um tempo maior
-  const handleScrollToApp = () => {
-    const container = document.getElementById('main-scroll-container');
-    const target = document.getElementById('app-section');
-    if (!container || !target) return;
-
-    // Desativa o scroll-snap temporariamente para não interromper a animação suave
-    container.style.scrollSnapType = 'none';
-
-    const start = container.scrollTop;
-    const end = target.offsetTop;
-    const distance = end - start;
-    const duration = 1500; // 1.5 segundos (mais lento e dramático)
-    let startTime: number | null = null;
-
-    // Função de aceleração Cúbica (começa devagar, acelera no meio, freia no fim)
-    const easeInOutCubic = (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-
-    const animation = (currentTime: number) => {
-      if (startTime === null) startTime = currentTime;
-      const timeElapsed = currentTime - startTime;
-      const progress = Math.min(timeElapsed / duration, 1);
-      
-      container.scrollTo(0, start + distance * easeInOutCubic(progress));
-
-      if (timeElapsed < duration) {
-        requestAnimationFrame(animation);
-      } else {
-        // Reativa o scroll-snap após a animação
-        container.style.scrollSnapType = 'y proximity';
-      }
-    };
-
-    requestAnimationFrame(animation);
-  };
-
-  // Referência para manipular a opacidade da tela inicial
-  const heroContentRef = useRef<HTMLDivElement>(null);
-
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    if (heroContentRef.current) {
-      const scrollTop = e.currentTarget.scrollTop;
-      const windowHeight = window.innerHeight;
-      
-      // Desaparece conforme rola a primeira tela
-      const rawOpacity = 1 - (scrollTop / windowHeight) * 1.5;
-      const opacity = Math.max(0, Math.min(1, rawOpacity));
-      
-      const scale = Math.max(0.95, 1 - (scrollTop / windowHeight) * 0.05);
-
-      heroContentRef.current.style.opacity = opacity.toString();
-      heroContentRef.current.style.transform = `scale(${scale})`;
-      
-      // Desiste de tentar capturar cliques se estiver invisível
-      heroContentRef.current.style.pointerEvents = opacity < 0.1 ? 'none' : 'auto';
-    }
-  };
-
   return (
-    // Esta é a div mestre que abraça tudo (agora sem forçar o snap de forma dura)
-    <div 
-      id="main-scroll-container" 
-      className="h-screen overflow-y-scroll snap-y snap-proximity scroll-smooth bg-[#0B1120] font-sans relative"
-      onScroll={handleScroll}
-    >
+    // Container Principal Fixo e Ocultando Overlay de Overflow Root
+    <div className="h-screen overflow-hidden bg-[#0B1120] font-sans relative">
       
-      {/* Mesh Gradients Globais que afetam toda a página para dar a sensação de continuidade translúcida */}
-      <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none"></div>
-      <div className="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+      {/* Mesh Gradients Globais */}
+      <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+      <div className="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-600/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
 
-      {/* ========================================== */}
-      {/* 1. TELA INICIAL (HERO SECTION)             */}
-      {/* ========================================== */}
-      {/* O container externo marca o espaço no scroll, o interno fica sticky no topo */}
-      <div className="snap-start relative h-[100vh] shrink-0 z-0">
-        <div 
-          ref={heroContentRef}
-          className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden"
-          style={{ willChange: 'opacity, transform' }}
-        >
-        
-        {/* Gradiente sutil em vez de cor sólida para uma mistura suave da primeira pra segunda tela */}
-        <div className="absolute inset-0 z-0 bg-gradient-to-b from-transparent via-[#0B1120]/60 to-[#0B1120]"></div>
-
-        {/* Efeito Glassmorphism em todo o Hero Content para ficar "translúcido" e chique */}
-        <div className="relative z-10 flex flex-col items-center text-center px-12 py-16 max-w-4xl bg-white/[0.02] backdrop-blur-md border border-white/5 rounded-[40px] shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] transition-transform duration-700 hover:scale-[1.01] hover:bg-white/[0.03]">
+      {!showApp ? (
+        /* ==========================================
+           1. TELA INICIAL (HERO SECTION)
+           ========================================== */
+        <div className="w-full h-full overflow-y-auto flex flex-col items-center justify-center relative z-10 py-12 px-4 animate-fade-in">
           
-          {/* LOGO ANIMADA COM ANÉIS DE NEON E EFEITOS GLASS */}
-          <div className="relative mb-10 group perspective-1000">
-            {/* 1. Aura de Fundo (Breathing Glow) */}
-            <div className="absolute -inset-10 bg-blue-500/10 rounded-full blur-[80px] animate-pulse-glow pointer-events-none"></div>
+          <div className="relative flex flex-col items-center text-center px-12 py-16 max-w-4xl bg-white/[0.02] backdrop-blur-md border border-white/5 rounded-[40px] shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] transition-transform duration-700 hover:scale-[1.01] hover:bg-white/[0.03]">
             
-            {/* 2. Anéis de Energia (Dual Orbit) */}
-            <div className="absolute -inset-4 bg-gradient-to-tr from-blue-600/40 via-cyan-400/20 to-emerald-500/40 rounded-[2.5rem] blur-xl opacity-40 group-hover:opacity-90 transition-all duration-700 animate-[spin_12s_linear_infinite]"></div>
-            <div className="absolute -inset-2 bg-gradient-to-bl from-indigo-500/30 via-sky-400/20 to-teal-400/30 rounded-[2.2rem] blur-lg opacity-30 group-hover:opacity-80 transition-all duration-1000 animate-[spin_8s_linear_infinite_reverse]"></div>
-            
-            {/* 3. Cápsula de borda fina (Glassmorphism avançado) */}
-            <div className="relative bg-[#0B1120]/60 backdrop-blur-2xl p-1 rounded-[2.1rem] shadow-2xl border border-white/10 group-hover:border-blue-400/40 transition-all duration-500 overflow-hidden transform group-hover:scale-[1.05] group-hover:shadow-[0_0_50px_rgba(59,130,246,0.4)]">
+            {/* LOGO ANIMADA COM ANÉIS DE NEON E EFEITOS GLASS */}
+            <div className="relative mb-10 group perspective-1000">
+              <div className="absolute -inset-10 bg-blue-500/10 rounded-full blur-[80px] animate-pulse-glow pointer-events-none"></div>
               
-              {/* Efeito de Reflexo (luz varrendo) */}
-              <div className="absolute inset-0 translate-x-[-150%] skew-x-[-20deg] bg-gradient-to-r from-transparent via-white/30 to-transparent group-hover:animate-shine z-20 pointer-events-none"></div>
+              <div className="absolute -inset-4 bg-gradient-to-tr from-blue-600/40 via-cyan-400/20 to-emerald-500/40 rounded-[2.5rem] blur-xl opacity-40 group-hover:opacity-90 transition-all duration-700 animate-[spin_12s_linear_infinite]"></div>
+              <div className="absolute -inset-2 bg-gradient-to-bl from-indigo-500/30 via-sky-400/20 to-teal-400/30 rounded-[2.2rem] blur-lg opacity-30 group-hover:opacity-80 transition-all duration-1000 animate-[spin_8s_linear_infinite_reverse]"></div>
+              
+              <div className="relative bg-[#0B1120]/60 backdrop-blur-2xl p-1 rounded-[2.1rem] shadow-2xl border border-white/10 group-hover:border-blue-400/40 transition-all duration-500 overflow-hidden transform group-hover:scale-[1.05] group-hover:shadow-[0_0_50px_rgba(59,130,246,0.4)]">
+                <div className="absolute inset-0 translate-x-[-150%] skew-x-[-20deg] bg-gradient-to-r from-transparent via-white/30 to-transparent group-hover:animate-shine z-20 pointer-events-none"></div>
+                <img 
+                  src="roncore-logo-v8.png" 
+                  alt="Logo RonCore Analytics" 
+                  className="w-32 h-32 md:w-44 md:h-44 object-cover rounded-[2rem] relative z-10 border border-white/5 transform transition-transform duration-1000 group-hover:rotate-[2deg]" 
+                />
+              </div>
+            </div>
 
-              <img 
-                src="roncore-logo-v8.png" 
-                alt="Logo RonCore Analytics" 
-                className="w-32 h-32 md:w-44 md:h-44 object-cover rounded-[2rem] relative z-10 border border-white/5 transform transition-transform duration-1000 group-hover:rotate-[2deg]" 
-              />
+            <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight mb-6 drop-shadow-2xl">
+              RonCore <span className="bg-gradient-to-r from-blue-400 to-emerald-400 text-transparent bg-clip-text">Analytics</span>
+            </h1>
+
+            <p className="text-lg md:text-xl text-slate-300 font-light mb-16 max-w-2xl leading-relaxed opacity-90">
+              Automação avançada para caracterização de reservatórios carbonáticos v2. 
+              Análise de perfis, classificação de Lucia e identificação de Unidades de Fluxo em segundos.
+            </p>
+
+            <div className="flex flex-col md:flex-row items-center justify-center gap-12">
+              <button 
+                onClick={() => setShowApp(true)}
+                className="group flex flex-col items-center gap-4 text-slate-400 hover:text-white transition-all duration-300"
+              >
+                <span className="text-xs uppercase tracking-[0.4em] font-bold opacity-60 group-hover:opacity-100 transition-opacity">
+                  Iniciar Análise
+                </span>
+                <div className="p-4 bg-white/5 rounded-full border border-white/10 group-hover:bg-white/10 group-hover:shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-all">
+                  <svg className="w-6 h-6 animate-pulse text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </div>
+              </button>
             </div>
           </div>
+        </div>
 
-          <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight mb-6 drop-shadow-2xl">
-            RonCore <span className="bg-gradient-to-r from-blue-400 to-emerald-400 text-transparent bg-clip-text">Analytics</span>
-          </h1>
+      ) : (
 
-          <p className="text-lg md:text-xl text-slate-300 font-light mb-16 max-w-2xl leading-relaxed opacity-90">
-            Automação avançada para caracterização de reservatórios carbonáticos v2. 
-            Análise de perfis, classificação de Lucia e identificação de Unidades de Fluxo em segundos.
-          </p>
-
-          <div className="flex flex-col md:flex-row items-center justify-center gap-12">
+        /* ==========================================
+           2. O APLICATIVO REAL
+           ========================================== */
+        <div className="w-full h-full overflow-y-auto flex flex-col items-center py-6 px-4 relative z-10 text-slate-200 animate-slide-up">
+          
+          {/* BOTÃO DE VOLTAR */}
+          <div className="w-full flex justify-start mb-4" style={{ maxWidth: step === 3 ? '64rem' : (step === 1 ? '48rem' : '28rem') }}>
             <button 
-              onClick={handleScrollToApp}
-              className="group flex flex-col items-center gap-4 text-slate-400 hover:text-white transition-all duration-300"
+              onClick={() => setShowApp(false)} 
+              className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors px-4 py-2 bg-slate-800/40 hover:bg-slate-700/60 rounded-xl border border-slate-700 backdrop-blur-sm group"
             >
-              <span className="text-xs uppercase tracking-[0.4em] font-bold opacity-60 group-hover:opacity-100 transition-opacity">
-                Iniciar Análise
-              </span>
-              <div className="p-4 bg-white/5 rounded-full border border-white/10 group-hover:bg-white/10 group-hover:shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-all">
-                <svg className="w-6 h-6 animate-bounce text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                </svg>
-              </div>
+              <svg className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+              Voltar ao Início
             </button>
-
-            {/* Botão de Instalação (Removido para versão Electron) */}
           </div>
-        </div>
-        </div>
-      </div>
 
-      {/* ========================================== */}
-      {/* 2. O APLICATIVO REAL                       */}
-      {/* ========================================== */}
-      <div id="app-section" className="snap-start min-h-screen relative flex flex-col items-center py-10 px-4 overflow-hidden text-slate-200 shrink-0 bg-transparent z-10">
-        
-        {/* Usando painel mais transparente para fundir melhor com a fluidez master */}
-        <div className={`w-full bg-[#131b2f]/60 backdrop-blur-2xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.5)] border border-slate-700/50 p-8 relative z-10 ${step === 3 ? 'max-w-5xl' : (step === 1 ? 'max-w-3xl' : 'max-w-md')} transition-all duration-500 animate-fade-in`}>
+          <div className={`w-full bg-[#131b2f]/60 backdrop-blur-2xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.5)] border border-slate-700/50 p-8 relative transition-all duration-500 ${step === 3 ? 'max-w-5xl' : (step === 1 ? 'max-w-3xl' : 'max-w-md')}`}>
 
         {/* MENU DE ABAS MÁGICO (PILL) */}
         <div className="flex justify-center mb-10 w-full relative z-20">
@@ -1357,7 +1290,8 @@ function App() {
       </div>
       {/* Botão Flutuante (Removido para versão Electron) */}
     </div>
-    </div>
+    )}
+  </div>
   );
 }
 
