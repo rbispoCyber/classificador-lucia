@@ -100,7 +100,7 @@ const DigitalTwinCore = ({ dominantClass }: { dominantClass: string }) => {
         </mesh>
 
         {/* HUD HOLOGRÁFICO DA CLASSE (Html Drei) */}
-        <Html position={[1.5, 1.0, 0]} center transform sprite zIndexRange={[100, 0]}>
+        <Html position={[1.5, 1.0, 0]} center transform sprite zIndexRange={[100, 0]} scale={0.5}>
           <div className="bg-[#0B1120]/80 backdrop-blur-md border border-slate-700/50 p-1 rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.5)] whitespace-nowrap select-none w-20 pointer-events-none">
             <div className="text-[6px] uppercase text-cyan-400 font-bold tracking-[0.2em] mb-0.5 flex items-center gap-1">
               <div className="w-1 h-1 rounded-full bg-cyan-400 animate-pulse"></div>
@@ -120,7 +120,7 @@ const DigitalTwinCore = ({ dominantClass }: { dominantClass: string }) => {
         </Html>
         
         {/* HUD ESTATÍSTICO INFERIOR */}
-        <Html position={[-1.7, -1.0, 0]} center transform sprite zIndexRange={[100, 0]}>
+        <Html position={[-1.7, -1.0, 0]} center transform sprite zIndexRange={[100, 0]} scale={0.5}>
            <div className="bg-[#0B1120]/80 backdrop-blur-md border border-slate-700/50 p-1 rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.5)] text-center w-20 select-none pointer-events-none border-l-2 border-l-blue-500">
              <div className="text-[6px] uppercase tracking-widest text-slate-400 font-mono">ESTRUTURA</div>
              <div className="text-[9px] font-bold text-slate-200">INTEGRIDADE HIGH</div>
