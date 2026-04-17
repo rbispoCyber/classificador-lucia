@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, type DragEvent } from 'react';
+import React, { useState, useEffect, type DragEvent } from 'react';
 
 // Molde da memória de histórico
 interface ArquivoSalvo {
