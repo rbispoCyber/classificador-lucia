@@ -66,3 +66,41 @@
   0%, 100% { opacity: 0.4; transform: scale(1); filter: blur(24px); }
   50% { opacity: 0.7; transform: scale(1.1); filter: blur(32px); }
 }
+
+@keyframes pageExitHero {
+  from { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+  to { opacity: 0; transform: scale(0.95) translateY(-30px); filter: blur(8px); }
+}
+
+@keyframes pageEnterApp {
+  from { opacity: 0; transform: scale(1.05) translateY(30px); filter: blur(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+}
+
+@keyframes pageExitApp {
+  from { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+  to { opacity: 0; transform: scale(1.05) translateY(30px); filter: blur(8px); }
+}
+
+@keyframes pageEnterHero {
+  from { opacity: 0; transform: scale(0.95) translateY(-30px); filter: blur(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+}
+
+@layer utilities {
+  .animate-page-exit-hero {
+    animation: pageExitHero 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .animate-page-enter-app {
+    animation: pageEnterApp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-page-exit-app {
+    animation: pageExitApp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .animate-page-enter-hero {
+    animation: pageEnterHero 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+}

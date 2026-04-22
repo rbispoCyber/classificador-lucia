@@ -51,6 +51,23 @@ function App() {
   // Adicione este novo estado junto com os outros
   const [abaAtiva, setAbaAtiva] = useState<'lucia' | 'ghe'>('lucia');
   const [showApp, setShowApp] = useState(false);
+  const [transitionState, setTransitionState] = useState<'idle' | 'to_app' | 'to_hero'>('idle');
+
+  const handleStartAnalysis = () => {
+    setTransitionState('to_app');
+    setTimeout(() => {
+      setShowApp(true);
+      setTransitionState('idle');
+    }, 480);
+  };
+
+  const handleGoToHero = () => {
+    setTransitionState('to_hero');
+    setTimeout(() => {
+      setShowApp(false);
+      setTransitionState('idle');
+    }, 480);
+  };
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -523,7 +540,7 @@ function App() {
         /* ==========================================
            1. TELA INICIAL (HERO SECTION)
            ========================================== */
-        <div className="w-full h-full overflow-y-auto flex flex-col items-center justify-center relative z-10 py-12 px-4 animate-fade-in">
+        <div className={`w-full h-full overflow-y-auto flex flex-col items-center justify-center relative z-10 py-12 px-4 ${transitionState === 'to_app' ? 'animate-page-exit-hero pointer-events-none' : 'animate-page-enter-hero'}`}>
           
           <div className="relative flex flex-col items-center text-center px-12 py-16 max-w-4xl bg-white/[0.02] backdrop-blur-md border border-white/5 rounded-[40px] shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] transition-transform duration-700 hover:scale-[1.01] hover:bg-white/[0.03]">
             
@@ -555,7 +572,7 @@ function App() {
 
             <div className="flex flex-col md:flex-row items-center justify-center gap-12">
               <button 
-                onClick={() => setShowApp(true)}
+                onClick={handleStartAnalysis}
                 className="group flex flex-col items-center gap-4 text-slate-400 hover:text-white transition-all duration-300"
               >
                 <span className="text-xs uppercase tracking-[0.4em] font-bold opacity-60 group-hover:opacity-100 transition-opacity">
@@ -576,12 +593,12 @@ function App() {
         /* ==========================================
            2. O APLICATIVO REAL
            ========================================== */
-        <div className="w-full h-full overflow-y-auto flex flex-col items-center py-6 px-4 relative z-10 text-slate-200 animate-slide-up">
+        <div className={`w-full h-full overflow-y-auto flex flex-col items-center py-6 px-4 relative z-10 text-slate-200 ${transitionState === 'to_hero' ? 'animate-page-exit-app pointer-events-none' : 'animate-page-enter-app'}`}>
           
           {/* BOTÃO DE VOLTAR */}
           <div className="w-full flex justify-start mb-4" style={{ maxWidth: step === 3 ? '64rem' : (step === 1 ? '48rem' : '28rem') }}>
             <button 
-              onClick={() => setShowApp(false)} 
+              onClick={handleGoToHero} 
               className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors px-4 py-2 bg-slate-800/40 hover:bg-slate-700/60 rounded-xl border border-slate-700 backdrop-blur-sm group"
             >
               <svg className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
